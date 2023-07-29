@@ -8,4 +8,4 @@ export const productRouter: Router = Router();
 
 productRouter.get("/", get_all_products);
 
-productRouter.get("/:name", get_product);
+productRouter.get("/:product_name", get_product);
