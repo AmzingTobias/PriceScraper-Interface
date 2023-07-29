@@ -1,8 +1,10 @@
-const Database = require("../data/database");
+import { Request, Response } from "express";
+import { LocalDatabase } from "../data/database";
 
-const db = Database.db;
+const db = LocalDatabase.getInstance().db;
 
-const get_all_products = async (req, res) => {
+export const get_all_products = async (req: Request, res: Response) => {
+  console.log("Test");
   if (typeof db !== "undefined") {
     db.all(`SELECT Name FROM Products ORDER BY ID`, (err, rows) => {
       if (err) {
@@ -18,7 +20,8 @@ const get_all_products = async (req, res) => {
   }
 };
 
-const get_product = async (req, res) => {
+export const get_product = async (req: Request, res: Response) => {
+  console.log("Test");
   const product_name = req.params.name;
   db.get(
     `SELECT Name FROM PRODUCTS WHERE Name = ?`,
@@ -36,9 +39,4 @@ const get_product = async (req, res) => {
       }
     }
   );
-};
-
-module.exports = {
-  get_all_products,
-  get_product,
 };
