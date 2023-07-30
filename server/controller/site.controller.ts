@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { getDatabase } from "../data/database";
 import { PRODUCT_ID_MISSING_MSG } from "../common/product";
-import { SITE_LINK_MISSING_MSG } from "../common/site";
+import { SITE_ID_MISSING_MSG, SITE_LINK_MISSING_MSG } from "../common/site";
 import sqlite3 from "sqlite3";
 
-const BAD_REQUEST_CODE = 200;
+const BAD_REQUEST_CODE = 400;
 const INTERNAL_SERVER_ERROR_CODE = 500;
 
 const db = getDatabase();
@@ -76,7 +76,7 @@ export const get_sites = async (req: Request, res: Response) => {
  * Check the request to either get all sites in the database, or if a
  * ProductId field exists in the query params, get all sites for a specific
  * product
- * @param req The request object
+ * @param req The request object, containing both a site link and product id in the request body
  * @param res The response object
  */
 export const add_site = async (req: Request, res: Response) => {
@@ -120,5 +120,31 @@ export const add_site = async (req: Request, res: Response) => {
     res.status(BAD_REQUEST_CODE).send(SITE_LINK_MISSING_MSG);
   } else {
     res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
+  }
+};
+/**
+ * Remove a site from the database, using the site Id
+ * @param req The request object, containing a site id in its parameters
+ * @param res The response object
+ */
+export const remove_site = async (req: Request, res: Response) => {
+  const { site_id } = req.params;
+  if (typeof site_id === "undefined") {
+    res.status(BAD_REQUEST_CODE).send(SITE_ID_MISSING_MSG);
+  } else {
+    db.run(`DELETE FROM Sources WHERE Id = ?`, site_id, function (err) {
+      if (err) {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      } else {
+        if (this.changes > 0) {
+          res.send(`Site: ${site_id} deleted`);
+        } else {
+          res.send(
+            `Site: ${site_id} couldn't be deleted, because it does not exist`
+          );
+        }
+      }
+    });
   }
 };
