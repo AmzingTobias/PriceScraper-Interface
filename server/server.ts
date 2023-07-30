@@ -7,6 +7,8 @@ const port: number = 5000;
 // const { spawn } = require("child_process");
 // const pythonScraper = "../../../Python/PriceScraper/main.py";
 
+app.use(express.json());
+
 app.use("/api/products", productRouter);
 app.use("/api/prices", priceRouter);
 
@@ -26,6 +28,11 @@ app.use("/api/prices", priceRouter);
 // pythonProcess.on("close", (code) => {
 //   console.log(`Python script exited with code ${code}`);
 // });
+
+// If no router was found for the request
+app.use((_req, res, _next) => {
+  res.status(404).send("Page not found");
+});
 
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);

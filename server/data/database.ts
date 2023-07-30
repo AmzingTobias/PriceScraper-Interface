@@ -2,7 +2,7 @@ import sqlite3, { Database } from "sqlite3";
 
 let instance: LocalDatabase | undefined = undefined;
 
-export class LocalDatabase {
+class LocalDatabase {
   db: Database;
 
   constructor() {
@@ -19,6 +19,6 @@ export class LocalDatabase {
   }
 }
 
-export default {
-  LocalDatabase,
-};
+export function getDatabase(): Database {
+  return LocalDatabase.getInstance().db;
+}
