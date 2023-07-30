@@ -4,7 +4,7 @@ import {
   get_all_products,
   rename_product,
   delete_product,
-} from "../controller/products.controllers";
+} from "../controller/product.controllers";
 
 // A router for product specific api calls
 export const productRouter: Router = Router();
