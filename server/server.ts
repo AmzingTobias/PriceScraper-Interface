@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import { productRouter } from "./routes/product.routes";
-import { priceRouter } from "./routes/prices.routes";
+import { priceRouter } from "./routes/price.routes";
 const app: Express = express();
 const port: number = 5000;
 
