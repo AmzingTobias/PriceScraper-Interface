@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
 import { getDatabase } from "../data/database";
+import { PRODUCT_ID_MISSING_MSG } from "../common/product";
+import { SITE_LINK_MISSING_MSG } from "../common/site";
+import sqlite3 from "sqlite3";
 
 const BAD_REQUEST_CODE = 200;
 const INTERNAL_SERVER_ERROR_CODE = 500;
@@ -37,7 +40,7 @@ const get_all_sites_for_product = async (
   product_id: string
 ) => {
   db.all(
-    `SELECT Id, Site_link AS 'Site Link', Product_Id AS 'Product Id' 
+    `SELECT Id, Site_link AS 'Site Link', Product_Id AS 'Product Id'
     FROM Sources WHERE Product_Id = ?`,
     product_id,
     (err, rows) => {
@@ -66,5 +69,56 @@ export const get_sites = async (req: Request, res: Response) => {
     get_all_sites_for_product(req, res, product_id as string);
   } else {
     res.status(BAD_REQUEST_CODE);
+  }
+};
+
+/**
+ * Check the request to either get all sites in the database, or if a
+ * ProductId field exists in the query params, get all sites for a specific
+ * product
+ * @param req The request object
+ * @param res The response object
+ */
+export const add_site = async (req: Request, res: Response) => {
+  const site_link = req.body["Site Link"];
+  const product_id = req.body["ProductId"];
+  if (typeof site_link !== "undefined" && typeof product_id !== "undefined") {
+    db.run(
+      `INSERT INTO Sources (Product_Id, Site_link) Values (?, ?)`,
+      [product_id, site_link],
+      function (err) {
+        if (err) {
+          const errorWithNumber = err as { errno?: number };
+          if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
+            if (
+              err.message === "SQLITE_CONSTRAINT: FOREIGN KEY constraint failed"
+            ) {
+              res
+                .status(BAD_REQUEST_CODE)
+                .send(`Product: ${product_id} does not exist`);
+            } else {
+              res
+                .status(BAD_REQUEST_CODE)
+                .send(`${site_link} already linked to product: ${product_id}`);
+            }
+          } else {
+            console.error(err);
+            res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+          }
+        } else {
+          if (this.changes > 0) {
+            res.send(`${site_link} added for product: ${product_id}`);
+          } else {
+            res.send(
+              `${site_link} could not be added for product: ${product_id}`
+            );
+          }
+        }
+      }
+    );
+  } else if (typeof site_link !== "undefined") {
+    res.status(BAD_REQUEST_CODE).send(SITE_LINK_MISSING_MSG);
+  } else {
+    res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
   }
 };
