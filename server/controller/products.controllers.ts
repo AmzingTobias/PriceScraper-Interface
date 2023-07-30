@@ -117,3 +117,31 @@ export const rename_product = async (req: Request, res: Response) => {
     res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
   }
 };
+
+/**
+ * Delete an existing product from the database
+ * @param req The request object, should contain an id in the parameters field,
+ * @param res The response object
+ */
+export const delete_product = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  // Validate product_id was included in the request
+  if (typeof id !== "undefined") {
+    db.run(`DELETE FROM PRODUCTS WHERE Id = ?`, id, function (err) {
+      if (err) {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      } else {
+        if (this.changes > 0) {
+          res.send(`Product ID: ${id} deleted`);
+        } else {
+          res.send(
+            `Product ID: ${id} could not be deleted, because it does not exist`
+          );
+        }
+      }
+    });
+  } else {
+    res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
+  }
+};

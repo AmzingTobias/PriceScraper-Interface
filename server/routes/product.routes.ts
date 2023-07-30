@@ -3,6 +3,7 @@ import {
   add_product,
   get_all_products,
   rename_product,
+  delete_product,
 } from "../controller/products.controllers";
 
 // A router for product specific api calls
@@ -16,3 +17,6 @@ productRouter.post("/", add_product);
 
 // Used for renaming a product, with a new unique name
 productRouter.patch("/:id", rename_product);
+
+// Used for deleting a product
+productRouter.delete("/:id", delete_product);
