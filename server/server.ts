@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import { productRouter } from "./routes/product.routes";
 import { priceRouter } from "./routes/price.routes";
+import { siteRouter } from "./routes/site.routes";
 const app: Express = express();
 const port: number = 5000;
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 app.use("/api/products", productRouter);
 app.use("/api/prices", priceRouter);
+app.use("/api/sites", siteRouter);
 
 // const pythonProcess = spawn(
 //   "C:/Users/Tobias/Documents/Coding/Python/PriceScraper/env/Scripts/python",
