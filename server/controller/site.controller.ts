@@ -175,3 +175,35 @@ export const remove_site = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const rename_site = (req: Request, res: Response) => {
+  const { site_id } = req.params;
+  const new_site_link = req.body["Site Link"];
+  if (typeof site_id !== "undefined" && typeof new_site_link !== "undefined") {
+    db.run(
+      `UPDATE Sources SET Site_link = ? WHERE Id = ?`,
+      [new_site_link, site_id],
+      function (err) {
+        if (err) {
+          const errorWithNumber = err as { errno?: number };
+          if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
+            res
+              .status(BAD_REQUEST_CODE)
+              .send(`${new_site_link} is already linked to this product`);
+          } else {
+            res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+            console.error(err);
+          }
+        } else {
+          if (this.changes > 0) {
+            res.send(`Site: ${site_id} link updated to: ${new_site_link}`);
+          } else {
+            res.send(
+              `Site: ${site_id} could not be updated, because it does not exist`
+            );
+          }
+        }
+      }
+    );
+  }
+};

@@ -4,6 +4,7 @@ import {
   add_site,
   remove_site,
   get_site_with_id,
+  rename_site,
 } from "../controller/site.controller";
 
 export const siteRouter: Router = Router();
@@ -19,3 +20,6 @@ siteRouter.get("/:site_id", get_site_with_id);
 
 // Delete a site link to a product, using a site Id
 siteRouter.delete("/:site_id", remove_site);
+
+// Rename a site link for an entry that already exists
+siteRouter.patch("/:site_id", rename_site);
