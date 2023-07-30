@@ -122,6 +122,33 @@ export const add_site = async (req: Request, res: Response) => {
     res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
   }
 };
+
+/**
+ * Get a site using the site Id from the database
+ * @param req The request object, containing a site id in its parameters
+ * @param res The response object
+ */
+export const get_site_with_id = async (req: Request, res: Response) => {
+  const { site_id } = req.params;
+  if (typeof site_id === "undefined") {
+    res.status(BAD_REQUEST_CODE).send(SITE_ID_MISSING_MSG);
+  } else {
+    db.get(
+      `SELECT Id, Site_link AS 'Site Link', Product_Id AS 'Product Id'
+    FROM Sources WHERE Id = ?`,
+      site_id,
+      (err, row) => {
+        if (err) {
+          console.error(err);
+          res.status(BAD_REQUEST_CODE).send("Database error");
+        } else {
+          res.json(row);
+        }
+      }
+    );
+  }
+};
+
 /**
  * Remove a site from the database, using the site Id
  * @param req The request object, containing a site id in its parameters
