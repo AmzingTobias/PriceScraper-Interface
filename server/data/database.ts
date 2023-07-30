@@ -9,6 +9,15 @@ class LocalDatabase {
     this.db = new sqlite3.Database(
       "../../../Python/PriceScraper/database/data.db"
     );
+    this.db.serialize(() => {
+      this.db.run("PRAGMA foreign_keys = ON;", (err) => {
+        if (err) {
+          console.error("Error enabling foreign key support:", err);
+        } else {
+          console.log("Foreign key support is enabled.");
+        }
+      });
+    });
   }
 
   static getInstance() {
