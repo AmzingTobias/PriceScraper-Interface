@@ -177,7 +177,7 @@ export const remove_site = async (req: Request, res: Response) => {
   }
 };
 
-export const rename_site = (req: Request, res: Response) => {
+export const rename_site = async (req: Request, res: Response) => {
   const { site_id } = req.params;
   const new_site_link = req.body["Site Link"];
   if (typeof site_id !== "undefined" && typeof new_site_link !== "undefined") {
