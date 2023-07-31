@@ -15,4 +15,4 @@ export function validate_product_name(product_name: string): [boolean, string] {
 
 export const PRODUCT_NAME_INVALID_MSG = "Product name invalid";
 export const PRODUCT_NAME_MISSING_MSG = "Product name missing in body";
-export const PRODUCT_ID_MISSING_MSG = "Product ID missing in request";
+export const PRODUCT_ID_MISSING_MSG = "ProductId missing in request";

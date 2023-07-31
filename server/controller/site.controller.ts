@@ -3,9 +3,10 @@ import { getDatabase } from "../data/database";
 import { PRODUCT_ID_MISSING_MSG } from "../common/product";
 import { SITE_ID_MISSING_MSG, SITE_LINK_MISSING_MSG } from "../common/site";
 import sqlite3 from "sqlite3";
-
-const BAD_REQUEST_CODE = 400;
-const INTERNAL_SERVER_ERROR_CODE = 500;
+import {
+  BAD_REQUEST_CODE,
+  INTERNAL_SERVER_ERROR_CODE,
+} from "../common/status_codes";
 
 const db = getDatabase();
 

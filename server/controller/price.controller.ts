@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import { getDatabase } from "../data/database";
 import { MISSING_DATE_MSG, date_string_to_date } from "../common/date";
 import { PRODUCT_ID_MISSING_MSG } from "../common/product";
-
-const BAD_REQUEST_CODE: number = 400;
-const INTERNAL_SERVER_ERROR_CODE: number = 500;
+import {
+  BAD_REQUEST_CODE,
+  INTERNAL_SERVER_ERROR_CODE,
+} from "../common/status_codes";
 
 const db = getDatabase();
 
