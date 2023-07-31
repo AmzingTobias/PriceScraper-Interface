@@ -7,10 +7,12 @@ import {
   PRODUCT_NAME_MISSING_MSG,
   validate_product_name,
 } from "../common/product";
+import {
+  BAD_REQUEST_CODE,
+  INTERNAL_SERVER_ERROR_CODE,
+} from "../common/status_codes";
 
 const db = getDatabase();
-const BAD_REQUEST_CODE: number = 400;
-const INTERNAL_SERVER_ERROR_CODE: number = 500;
 
 /**
  * Gets all the products found in the database

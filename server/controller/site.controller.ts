@@ -3,9 +3,10 @@ import { getDatabase } from "../data/database";
 import { PRODUCT_ID_MISSING_MSG } from "../common/product";
 import { SITE_ID_MISSING_MSG, SITE_LINK_MISSING_MSG } from "../common/site";
 import sqlite3 from "sqlite3";
-
-const BAD_REQUEST_CODE = 400;
-const INTERNAL_SERVER_ERROR_CODE = 500;
+import {
+  BAD_REQUEST_CODE,
+  INTERNAL_SERVER_ERROR_CODE,
+} from "../common/status_codes";
 
 const db = getDatabase();
 
@@ -176,7 +177,7 @@ export const remove_site = async (req: Request, res: Response) => {
   }
 };
 
-export const rename_site = (req: Request, res: Response) => {
+export const rename_site = async (req: Request, res: Response) => {
   const { site_id } = req.params;
   const new_site_link = req.body["Site Link"];
   if (typeof site_id !== "undefined" && typeof new_site_link !== "undefined") {
