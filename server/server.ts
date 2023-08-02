@@ -4,6 +4,7 @@ import { priceRouter } from "./routes/price.routes";
 import { siteRouter } from "./routes/site.routes";
 import { notificationRouter } from "./routes/notificant.routes";
 import { imageRouter } from "./routes/image.routes";
+import { userRouter } from "./routes/user.routes";
 const app: Express = express();
 const port: number = 5000;
 
@@ -17,6 +18,7 @@ app.use("/api/prices", priceRouter);
 app.use("/api/sites", siteRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/images", imageRouter);
+app.use("/api/users", userRouter);
 
 // const pythonProcess = spawn(
 //   "C:/Users/Tobias/Documents/Coding/Python/PriceScraper/env/Scripts/python",
