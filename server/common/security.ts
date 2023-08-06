@@ -5,7 +5,7 @@ import { tUserAccount } from "./user";
 import { getUserWithId } from "../models/user.model";
 
 export const hashPassword = async (raw_password: string): Promise<string> => {
-  const saltRounds = 8;
+  const saltRounds = Number(process.env.PASSWORD_SALT_ROUNDS);
   const hashed_password = await bcrypt.hash(raw_password, saltRounds);
   return hashed_password;
 };

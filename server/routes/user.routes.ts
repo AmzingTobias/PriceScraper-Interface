@@ -7,7 +7,7 @@ import {
   login,
   update_email,
   update_password,
-} from "../controller/userController";
+} from "../controller/user.controller";
 import { verify_token } from "../common/security";
 
 export const userRouter: Router = Router();

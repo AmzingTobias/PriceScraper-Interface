@@ -1,3 +1,5 @@
+import { configDotenv } from "dotenv";
+configDotenv();
 import express, { Express, Request, Response } from "express";
 import { productRouter } from "./routes/product.routes";
 import { priceRouter } from "./routes/price.routes";
@@ -5,7 +7,6 @@ import { siteRouter } from "./routes/site.routes";
 import { notificationRouter } from "./routes/notificant.routes";
 import { imageRouter } from "./routes/image.routes";
 import { userRouter } from "./routes/user.routes";
-import { configDotenv } from "dotenv";
 import { tUserAccount } from "./common/user";
 
 declare global {
@@ -16,7 +17,6 @@ declare global {
   }
 }
 
-configDotenv();
 const app: Express = express();
 const port: number = 5000;
 
