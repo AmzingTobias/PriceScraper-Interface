@@ -8,6 +8,7 @@ import {
   update_email,
   update_password,
 } from "../controller/userController";
+import { verify_token } from "../common/security";
 
 export const userRouter: Router = Router();
 

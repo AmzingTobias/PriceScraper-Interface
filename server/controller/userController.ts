@@ -5,9 +5,11 @@ import { get_today_date_as_string } from "../common/date";
 import {
   BAD_REQUEST_CODE,
   INTERNAL_SERVER_ERROR_CODE,
+  UNAUTHORIZED_REQUEST_CODE,
 } from "../common/status_codes";
 import sqlite3, { INTERNAL } from "sqlite3";
-import { USER_ID_MISSING_MSG } from "../common/user";
+import { USER_ID_MISSING_MSG, isUserAdmin, tUserAccount } from "../common/user";
+import jwt from "jsonwebtoken";
 
 const db = getDatabase();
 
@@ -86,16 +88,6 @@ export const update_password = async (req: Request, res: Response) => {
 };
 
 /**
- * A type for what the data will look like, when it is received from the Users table
- */
-type userAccount = {
-  Id: number;
-  Username: string;
-  Password: string;
-  Date_created: string;
-};
-
-/**
  * Login query
  * @param req The request object. It should contain a username and password in its request body
  * @param res The response object
@@ -113,18 +105,25 @@ export const login = async (req: Request, res: Response) => {
           res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
         } else {
           if (typeof row !== "undefined") {
-            const user_account = row as userAccount;
+            const user_account = row as tUserAccount;
             const password_valid = await compare_hashed_password(
               password,
               user_account.Password
             );
             if (password_valid) {
-              res.status(200).end();
+              const token = jwt.sign(
+                {
+                  Id: user_account.Id,
+                },
+                process.env.API_SECRET as string,
+                { expiresIn: 86400 }
+              );
+              res.status(200).json({ token: token });
             } else {
-              res.status(401).end();
+              res.status(UNAUTHORIZED_REQUEST_CODE).end();
             }
           } else {
-            res.status(BAD_REQUEST_CODE).end();
+            res.status(UNAUTHORIZED_REQUEST_CODE).end();
           }
         }
       }
