@@ -1,61 +1,53 @@
 import { Request, Response } from "express";
 import { compare_hashed_password, hashPassword } from "../common/security";
-import { getDatabase } from "../data/database";
-import { get_today_date_as_string } from "../common/date";
 import {
   BAD_REQUEST_CODE,
   INTERNAL_SERVER_ERROR_CODE,
   UNAUTHORIZED_REQUEST_CODE,
 } from "../common/status_codes";
-import sqlite3, { INTERNAL } from "sqlite3";
-import { USER_ID_MISSING_MSG, isUserAdmin, tUserAccount } from "../common/user";
+import { USER_ID_MISSING_MSG, is_email_valid } from "../common/user";
+import {
+  addEmailForUser,
+  createUser,
+  getEmailForUserWithId,
+  getUserWithUsername,
+  isUserAdmin,
+  updateUserEmail,
+  updateUserPassword,
+} from "../models/user";
 import jwt from "jsonwebtoken";
 
-const db = getDatabase();
-
 /**
- * Create a user account in the database
+ * Create a user account
  * @param req The request object, it should contain a username and password in the body
  * @param res The response object
  */
 export const create_account = async (req: Request, res: Response) => {
   const { username, password } = req.body;
   if (typeof username === "string" && typeof password !== "undefined") {
-    const username_lower = (username as string).toLowerCase().trim();
-    const todays_date = get_today_date_as_string();
+    const username_lower = username.toLowerCase().trim();
     const hashed_password = await hashPassword(password);
-    db.run(
-      "INSERT INTO Users (Username, Password, Date_created) VALUES (?, ?, ?)",
-      [username_lower, hashed_password, todays_date],
-      function (err) {
-        if (err) {
-          const errorWithNumber = err as { errno?: number };
-          if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
-            res
-              .status(BAD_REQUEST_CODE)
-              .send(`Username "${username}" already in use`);
-          } else {
-            res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-            console.error(err);
-          }
+    createUser(username, hashed_password)
+      .then((created) => {
+        if (created) {
+          res.json(`User: ${username_lower} created`);
         } else {
-          if (this.changes > 0) {
-            res.send(`User: ${username} created`);
-          } else {
-            res
-              .status(INTERNAL_SERVER_ERROR_CODE)
-              .send(`User: ${username} could not be created`);
-          }
+          res
+            .status(BAD_REQUEST_CODE)
+            .json(`User: ${username_lower} already exists`);
         }
-      }
-    );
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      });
   } else {
     res.status(BAD_REQUEST_CODE).send("Missing request fields");
   }
 };
 
 /**
- * Update a password for the user account
+ * Update a password
  * @param req The request object. It should contain a userId in the request body
  * @param res The response object
  */
@@ -63,25 +55,24 @@ export const update_password = async (req: Request, res: Response) => {
   const user_id = req.body["UserId"];
   const { password } = req.body;
   if (typeof user_id === "number" && typeof password === "string") {
-    const hashed_password = await hashPassword(password);
-    db.run(
-      "UPDATE Users SET Password = ? WHERE Id = ?",
-      [hashed_password, user_id],
-      function (err) {
-        if (err) {
-          console.error(err);
-          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-        } else {
-          if (this.changes > 0) {
+    if (req.user !== undefined && req.user.Id === user_id) {
+      const hashed_password = await hashPassword(password);
+      updateUserPassword(user_id, hashed_password)
+        .then((updated) => {
+          if (updated) {
             res.send("Password updated");
           } else {
-            res
-              .status(BAD_REQUEST_CODE)
-              .send(`User: ${user_id} does not exist`);
+            // This should never be reached, due to the previous authentication checking
+            res.status(BAD_REQUEST_CODE).send("User does not exist");
           }
-        }
-      }
-    );
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+        });
+    } else {
+      res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+    }
   } else {
     res.status(BAD_REQUEST_CODE).send("Missing request fields");
   }
@@ -96,38 +87,33 @@ export const login = async (req: Request, res: Response) => {
   const { username, password } = req.body;
   if (typeof username === "string" && typeof password === "string") {
     const username_lower = username.toLowerCase();
-    db.get(
-      "SELECT * FROM Users WHERE username = ?",
-      [username_lower],
-      async (err, row) => {
-        if (err) {
-          console.error(err);
-          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+    getUserWithUsername(username_lower)
+      .then(async (user_account) => {
+        if (user_account === undefined) {
+          res.status(UNAUTHORIZED_REQUEST_CODE).end();
         } else {
-          if (typeof row !== "undefined") {
-            const user_account = row as tUserAccount;
-            const password_valid = await compare_hashed_password(
-              password,
-              user_account.Password
+          const password_valid = await compare_hashed_password(
+            password,
+            user_account.Password
+          );
+          if (password_valid) {
+            const token = jwt.sign(
+              {
+                Id: user_account.Id,
+              },
+              process.env.API_SECRET as string,
+              { expiresIn: 86400 }
             );
-            if (password_valid) {
-              const token = jwt.sign(
-                {
-                  Id: user_account.Id,
-                },
-                process.env.API_SECRET as string,
-                { expiresIn: 86400 }
-              );
-              res.status(200).json({ token: token });
-            } else {
-              res.status(UNAUTHORIZED_REQUEST_CODE).end();
-            }
+            res.status(200).json({ token: token });
           } else {
             res.status(UNAUTHORIZED_REQUEST_CODE).end();
           }
         }
-      }
-    );
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).end();
+      });
   } else {
     res.status(BAD_REQUEST_CODE).end();
   }
@@ -139,25 +125,22 @@ export const login = async (req: Request, res: Response) => {
  * @param res The response object
  */
 export const is_account_admin = async (req: Request, res: Response) => {
-  const user_id = req.body["UserId"];
-  if (typeof user_id === "number") {
-    db.get(
-      "SELECT * FROM Admins Where User_Id = ?",
-      user_id,
-      function (err, row) {
-        if (err) {
-          console.error(err);
-          res.send(INTERNAL_SERVER_ERROR_CODE);
-        }
-        if (typeof row === "undefined") {
-          res.json(false);
-        } else {
-          res.json(true);
-        }
-      }
-    );
+  if (req.user === undefined) {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("User not found");
   } else {
-    res.status(INTERNAL_SERVER_ERROR_CODE).send(USER_ID_MISSING_MSG);
+    const user_id = req.body["UserId"];
+    if (typeof user_id === "number") {
+      isUserAdmin(user_id)
+        .then((result) => {
+          res.json(result);
+        })
+        .catch((error) => {
+          console.error(error);
+          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+        });
+    } else {
+      res.status(INTERNAL_SERVER_ERROR_CODE).send(USER_ID_MISSING_MSG);
+    }
   }
 };
 
@@ -170,38 +153,31 @@ export const add_email = async (req: Request, res: Response) => {
   const user_id = req.body["UserId"];
   const email = req.body["Email"];
   if (typeof user_id === "number" && typeof email === "string") {
-    const email_trimmed = email.trim();
-    const email_lower = email_trimmed.toLowerCase();
-    // TODO Check email is an email
-    db.run(
-      "INSERT INTO Emails (Email, User_Id) VALUES (?, ?)",
-      [email_lower, user_id],
-      function (err) {
-        if (err) {
-          const errorWithNumber = err as { errno?: number };
-          if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
-            if (
-              err.message === "SQLITE_CONSTRAINT: FOREIGN KEY constraint failed"
-            ) {
+    if (req.user !== undefined && req.user.Id === user_id) {
+      const email_lower = email.trim().toLowerCase();
+      if (is_email_valid(email_lower)) {
+        addEmailForUser(user_id, email)
+          .then((email_added) => {
+            if (email_added) {
+              res.send(`Email: ${email} added to user: ${user_id}`);
+            } else {
               res
                 .status(BAD_REQUEST_CODE)
-                .send(`User: ${user_id} does not exist`);
-            } else {
-              res.status(BAD_REQUEST_CODE).send(`User or Email already in use`);
+                .send(
+                  "User already has an email, Email is already in use, or user does not exist"
+                );
             }
-          } else {
+          })
+          .catch((err) => {
             console.error(err);
             res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-          }
-        } else {
-          if (this.changes > 0) {
-            res.send(`Email added for user: ${user_id}`);
-          } else {
-            res.status(BAD_REQUEST_CODE).send("Email could not be added");
-          }
-        }
+          });
+      } else {
+        res.status(BAD_REQUEST_CODE).send("Email invalid");
       }
-    );
+    } else {
+      res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+    }
   } else {
     res.status(BAD_REQUEST_CODE).send("Missing request fields");
   }
@@ -213,22 +189,31 @@ export const add_email = async (req: Request, res: Response) => {
  * @param res The response object
  */
 export const get_email = async (req: Request, res: Response) => {
-  const user_id = req.body["UserId"];
-  if (typeof user_id === "number") {
-    db.get(
-      "SELECT Email FROM Emails WHERE User_Id = ?",
-      user_id,
-      (err, row) => {
-        if (err) {
-          console.error(err);
-          res.status(INTERNAL_SERVER_ERROR_CODE);
-        } else {
-          res.json(row);
-        }
-      }
-    );
+  if (req.user === undefined) {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("User not found");
   } else {
-    res.status(BAD_REQUEST_CODE).send(USER_ID_MISSING_MSG);
+    const user_id = req.body["UserId"];
+    if (typeof user_id !== "number") {
+      res.status(BAD_REQUEST_CODE).send(USER_ID_MISSING_MSG);
+    } else {
+      const user_is_admin = await isUserAdmin(req.user.Id);
+      if (user_is_admin || req.user.Id === user_id) {
+        getEmailForUserWithId(user_id)
+          .then((email) => {
+            if (email === "") {
+              res.json({ Email: null });
+            } else {
+              res.json({ Email: email });
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+          });
+      } else {
+        res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+      }
+    }
   }
 };
 
@@ -241,39 +226,29 @@ export const update_email = async (req: Request, res: Response) => {
   const user_id = req.body["UserId"];
   const email = req.body["Email"];
   if (typeof user_id === "number" && typeof email === "string") {
-    const email_trimmed = email.trim();
-    const email_lower = email_trimmed.toLowerCase();
-    db.run(
-      "UPDATE Emails SET Email = ? WHERE User_Id = ?",
-      [email_lower, user_id],
-      function (err) {
-        if (err) {
-          const errorWithNumber = err as { errno?: number };
-          if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
-            if (
-              err.message === "SQLITE_CONSTRAINT: FOREIGN KEY constraint failed"
-            ) {
+    if (req.user !== undefined && req.user.Id === user_id) {
+      const email_lower = email.trim().toLowerCase();
+      if (is_email_valid(email_lower)) {
+        updateUserEmail(user_id, email_lower)
+          .then((email_updated) => {
+            if (email_updated) {
+              res.send(`Email: ${email} set for user: ${user_id}`);
+            } else {
               res
                 .status(BAD_REQUEST_CODE)
-                .send(`User: ${user_id} does not exist`);
-            } else {
-              res.status(BAD_REQUEST_CODE).send(`Email already in use`);
+                .send("Email already exists or user does not exist");
             }
-          } else {
+          })
+          .catch((err) => {
             console.error(err);
             res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-          }
-        } else {
-          if (this.changes > 0) {
-            res.send("Email updated");
-          } else {
-            res
-              .status(BAD_REQUEST_CODE)
-              .send("User does not have an email on their account");
-          }
-        }
+          });
+      } else {
+        res.status(BAD_REQUEST_CODE).send("Email invalid");
       }
-    );
+    } else {
+      res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+    }
   } else {
     res.status(BAD_REQUEST_CODE).send("Missing request fields");
   }

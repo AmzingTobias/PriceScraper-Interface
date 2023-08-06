@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
-import { getUserWithId, tUserAccount } from "./user";
+import { tUserAccount } from "./user";
+import { getUserWithId } from "../models/user";
 
 export const hashPassword = async (raw_password: string): Promise<string> => {
   const saltRounds = 8;
