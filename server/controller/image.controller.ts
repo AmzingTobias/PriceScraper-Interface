@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { getDatabase } from "../data/database";
 import {
   BAD_REQUEST_CODE,
   INTERNAL_SERVER_ERROR_CODE,
@@ -16,8 +15,6 @@ import {
   unlinkProductFromImage,
 } from "../models/image.models";
 import { isUserAdmin } from "../models/user.models";
-
-const db = getDatabase();
 
 /**
  * Add a new image to the database
