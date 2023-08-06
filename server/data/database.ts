@@ -6,9 +6,7 @@ class LocalDatabase {
   db: Database;
 
   constructor() {
-    this.db = new sqlite3.Database(
-      "../../../Python/PriceScraper/database/data.db"
-    );
+    this.db = new sqlite3.Database("data.db");
     this.db.serialize(() => {
       this.db.run("PRAGMA foreign_keys = ON;", (err) => {
         if (err) {
