@@ -14,7 +14,7 @@ import {
   isUserAdmin,
   updateUserEmail,
   updateUserPassword,
-} from "../models/user.model";
+} from "../models/user.models";
 import jwt from "jsonwebtoken";
 
 /**

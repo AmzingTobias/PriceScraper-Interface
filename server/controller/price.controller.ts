@@ -1,13 +1,15 @@
 import { Request, Response } from "express";
-import { getDatabase } from "../data/database";
 import { MISSING_DATE_MSG, date_string_to_date } from "../common/date";
 import { PRODUCT_ID_MISSING_MSG } from "../common/product";
 import {
   BAD_REQUEST_CODE,
   INTERNAL_SERVER_ERROR_CODE,
 } from "../common/status_codes";
-
-const db = getDatabase();
+import {
+  getAllPricesWithProductId,
+  getLowestPriceWithProductId,
+  getPriceForProductWithDate,
+} from "../models/price.models";
 
 type IProductPrice = {
   Price: number;
@@ -24,34 +26,24 @@ type IProductPrice = {
 const get_price_at_date_for_product = async (req: Request, res: Response) => {
   const { product_id } = req.params;
   const { date } = req.query;
-  if (typeof product_id !== "undefined" && typeof date !== "undefined") {
-    db.get(
-      `SELECT Prices.Price, Prices.Date, Sources.Site_link
-      FROM Prices
-      JOIN Products ON Prices.Product_Id = Products.Id
-      JOIN Sources ON Prices.Site_Id = Sources.Id
-      WHERE Products.Id = ? AND Prices.Date = ?;`,
-      [product_id, date],
-      (err, row: any) => {
-        if (err) {
-          console.error(err);
-          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+  if (typeof product_id === "string" && typeof date === "string") {
+    getPriceForProductWithDate(Number(product_id), date)
+      .then((price_entry) => {
+        if (price_entry === undefined) {
+          res.json({});
         } else {
-          if (typeof row === "undefined") {
-            res.json({});
-          } else {
-            // Map the data received to then return as json
-            const dataReceived: IProductPrice = {
-              Price: row.Price,
-              // Conver the date from a string into a date object
-              Date: date_string_to_date(row.Date),
-              Site_link: row.Site_link,
-            };
-            res.json(dataReceived);
-          }
+          const data_received: IProductPrice = {
+            Price: price_entry.Price,
+            Date: date_string_to_date(price_entry.Date),
+            Site_link: price_entry.Site_link,
+          };
+          res.json(data_received);
         }
-      }
-    );
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      });
   } else if (typeof date === "undefined") {
     res.status(BAD_REQUEST_CODE).send(MISSING_DATE_MSG);
   } else {
@@ -67,32 +59,14 @@ const get_price_at_date_for_product = async (req: Request, res: Response) => {
 const get_all_prices_for_product = async (req: Request, res: Response) => {
   const { product_id } = req.params;
   if (typeof product_id !== "undefined") {
-    db.all(
-      `SELECT Prices.Price, Prices.Date, Sources.Site_link
-      FROM Prices
-      JOIN Products ON Prices.Product_Id = Products.Id
-      JOIN Sources ON Prices.Site_Id = Sources.Id
-      WHERE Products.Id = ?;`,
-      product_id,
-      (err, rows: any[]) => {
-        if (err) {
-          console.error(err);
-          res.status(INTERNAL_SERVER_ERROR_CODE).json("Database error");
-        } else {
-          if (typeof rows === "undefined") {
-            res.json({});
-          } else {
-            // Map the data received to then return as json
-            const dataReceived: IProductPrice[] = rows.map((element) => ({
-              Price: element.Price,
-              Date: date_string_to_date(element.Date),
-              Site_link: element.Site_link,
-            }));
-            res.json(dataReceived);
-          }
-        }
-      }
-    );
+    getAllPricesWithProductId(Number(product_id))
+      .then((price_entries) => {
+        res.json(price_entries);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      });
   } else {
     res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
   }
@@ -124,32 +98,24 @@ export const get_lowest_price_for_product = async (
 ) => {
   const { product_id } = req.params;
   if (typeof product_id !== "undefined") {
-    db.get(
-      `SELECT MIN(Prices.Price), Prices.Price, Prices.Date, Sources.Site_link
-      FROM Prices
-      JOIN Products ON Prices.Product_Id = Products.Id
-      JOIN Sources ON Prices.Site_Id = Sources.Id
-      WHERE Products.Id = ?;`,
-      product_id,
-      (err, row: any) => {
-        if (err) {
-          console.error(err);
-          res.status(INTERNAL_SERVER_ERROR_CODE).json("Database error");
+    getLowestPriceWithProductId(Number(product_id))
+      .then((price_entry) => {
+        if (price_entry === undefined) {
+          res.json({});
         } else {
-          if (typeof row === "undefined") {
-            res.json({});
-          } else {
-            // Map the data received to then return as json
-            const dataReceived: IProductPrice = {
-              Price: row.Price,
-              Date: date_string_to_date(row.Date),
-              Site_link: row.Site_link,
-            };
-            res.json(dataReceived);
-          }
+          // Map the data received to then return as json
+          const dataReceived: IProductPrice = {
+            Price: price_entry.Price,
+            Date: date_string_to_date(price_entry.Date),
+            Site_link: price_entry.Site_link,
+          };
+          res.json(dataReceived);
         }
-      }
-    );
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      });
   } else {
     res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
   }

@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
 import { tUserAccount } from "./user";
-import { getUserWithId } from "../models/user.model";
+import { getUserWithId } from "../models/user.models";
 
 export const hashPassword = async (raw_password: string): Promise<string> => {
   const saltRounds = Number(process.env.PASSWORD_SALT_ROUNDS);
