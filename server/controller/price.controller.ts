@@ -11,7 +11,7 @@ import {
   getPriceForProductWithDate,
 } from "../models/price.models";
 
-type IProductPrice = {
+type tProductPrice = {
   Price: number;
   Date: string | Date;
   Site_link: string;
@@ -32,7 +32,7 @@ const get_price_at_date_for_product = async (req: Request, res: Response) => {
         if (price_entry === undefined) {
           res.json({});
         } else {
-          const data_received: IProductPrice = {
+          const data_received: tProductPrice = {
             Price: price_entry.Price,
             Date: date_string_to_date(price_entry.Date),
             Site_link: price_entry.Site_link,
@@ -104,7 +104,7 @@ export const get_lowest_price_for_product = async (
           res.json({});
         } else {
           // Map the data received to then return as json
-          const dataReceived: IProductPrice = {
+          const dataReceived: tProductPrice = {
             Price: price_entry.Price,
             Date: date_string_to_date(price_entry.Date),
             Site_link: price_entry.Site_link,
