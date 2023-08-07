@@ -48,22 +48,21 @@ export const create_account = async (req: Request, res: Response) => {
 
 /**
  * Update a password
- * @param req The request object. It should contain a userId in the request body
+ * @param req The request object. It should contain a new password in the request body
  * @param res The response object
  */
 export const update_password = async (req: Request, res: Response) => {
-  const user_id = req.body["UserId"];
   const { password } = req.body;
-  if (typeof user_id === "number" && typeof password === "string") {
-    if (req.user !== undefined && req.user.Id === user_id) {
+  if (typeof password === "string") {
+    if (req.user !== undefined) {
       const hashed_password = await hashPassword(password);
-      updateUserPassword(user_id, hashed_password)
+      updateUserPassword(req.user.Id, hashed_password)
         .then((updated) => {
           if (updated) {
             res.send("Password updated");
           } else {
             // This should never be reached, due to the previous authentication checking
-            res.status(BAD_REQUEST_CODE).send("User does not exist");
+            res.status(INTERNAL_SERVER_ERROR_CODE).send("User does not exist");
           }
         })
         .catch((err) => {
@@ -74,7 +73,7 @@ export const update_password = async (req: Request, res: Response) => {
       res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
     }
   } else {
-    res.status(BAD_REQUEST_CODE).send("Missing request fields");
+    res.status(BAD_REQUEST_CODE).send("Missing new password");
   }
 };
 
@@ -121,26 +120,21 @@ export const login = async (req: Request, res: Response) => {
 
 /**
  * Check if an account is marked as an administrator
- * @param req The request object. It should contain a userId in the request body
+ * @param req The request object
  * @param res The response object
  */
 export const is_account_admin = async (req: Request, res: Response) => {
   if (req.user === undefined) {
     res.status(UNAUTHORIZED_REQUEST_CODE).send("User not found");
   } else {
-    const user_id = req.body["UserId"];
-    if (typeof user_id === "number") {
-      isUserAdmin(user_id)
-        .then((result) => {
-          res.json(result);
-        })
-        .catch((error) => {
-          console.error(error);
-          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-        });
-    } else {
-      res.status(INTERNAL_SERVER_ERROR_CODE).send(USER_ID_MISSING_MSG);
-    }
+    isUserAdmin(req.user.Id)
+      .then((result) => {
+        res.json(result);
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      });
   }
 };
 
@@ -150,22 +144,19 @@ export const is_account_admin = async (req: Request, res: Response) => {
  * @param res The response object
  */
 export const add_email = async (req: Request, res: Response) => {
-  const user_id = req.body["UserId"];
   const email = req.body["Email"];
-  if (typeof user_id === "number" && typeof email === "string") {
-    if (req.user !== undefined && req.user.Id === user_id) {
+  if (typeof email === "string") {
+    if (req.user !== undefined) {
       const email_lower = email.trim().toLowerCase();
       if (is_email_valid(email_lower)) {
-        addEmailForUser(user_id, email)
+        addEmailForUser(req.user.Id, email)
           .then((email_added) => {
             if (email_added) {
-              res.send(`Email: ${email} added to user: ${user_id}`);
+              res.send(`Email: ${email} added to user`);
             } else {
               res
                 .status(BAD_REQUEST_CODE)
-                .send(
-                  "User already has an email, Email is already in use, or user does not exist"
-                );
+                .send("User already has an email or email is already in use");
             }
           })
           .catch((err) => {
@@ -179,60 +170,49 @@ export const add_email = async (req: Request, res: Response) => {
       res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
     }
   } else {
-    res.status(BAD_REQUEST_CODE).send("Missing request fields");
+    res.status(BAD_REQUEST_CODE).send("Missing email");
   }
 };
 
 /**
  * Get an email registered for an account
- * @param req The request object. It should contain a user Id in the request body
+ * @param req The request object
  * @param res The response object
  */
 export const get_email = async (req: Request, res: Response) => {
   if (req.user === undefined) {
-    res.status(UNAUTHORIZED_REQUEST_CODE).send("User not found");
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   } else {
-    const user_id = req.body["UserId"];
-    if (typeof user_id !== "number") {
-      res.status(BAD_REQUEST_CODE).send(USER_ID_MISSING_MSG);
-    } else {
-      const user_is_admin = await isUserAdmin(req.user.Id);
-      if (user_is_admin || req.user.Id === user_id) {
-        getEmailForUserWithId(user_id)
-          .then((email) => {
-            if (email === "") {
-              res.json({ Email: null });
-            } else {
-              res.json({ Email: email });
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-            res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-          });
-      } else {
-        res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
-      }
-    }
+    getEmailForUserWithId(req.user.Id)
+      .then((email) => {
+        if (email === "") {
+          res.json({ Email: null });
+        } else {
+          res.json({ Email: email });
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      });
   }
 };
 
 /**
  * Update an email on an account
- * @param req The request object. It should contain a userId and email in the request body
+ * @param req The request object
  * @param res The response object
  */
 export const update_email = async (req: Request, res: Response) => {
-  const user_id = req.body["UserId"];
   const email = req.body["Email"];
-  if (typeof user_id === "number" && typeof email === "string") {
-    if (req.user !== undefined && req.user.Id === user_id) {
+  if (typeof email === "string") {
+    if (req.user !== undefined) {
       const email_lower = email.trim().toLowerCase();
       if (is_email_valid(email_lower)) {
-        updateUserEmail(user_id, email_lower)
+        updateUserEmail(req.user.Id, email_lower)
           .then((email_updated) => {
             if (email_updated) {
-              res.send(`Email: ${email} set for user: ${user_id}`);
+              res.send(`Email: ${email} set for user`);
             } else {
               res
                 .status(BAD_REQUEST_CODE)
@@ -250,6 +230,6 @@ export const update_email = async (req: Request, res: Response) => {
       res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
     }
   } else {
-    res.status(BAD_REQUEST_CODE).send("Missing request fields");
+    res.status(BAD_REQUEST_CODE).send("Missing email");
   }
 };
