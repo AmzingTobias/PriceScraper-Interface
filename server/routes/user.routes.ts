@@ -7,7 +7,8 @@ import {
   login,
   update_email,
   update_password,
-} from "../controller/userController";
+} from "../controller/user.controller";
+import { verify_token } from "../common/security";
 
 export const userRouter: Router = Router();
 
@@ -15,19 +16,19 @@ export const userRouter: Router = Router();
 userRouter.post("/signup", create_account);
 
 // Change a password for an account
-userRouter.patch("/change-password", update_password);
+userRouter.patch("/change-password", verify_token, update_password);
 
 // Login to an account
 userRouter.post("/login", login);
 
 // Check if an account is an administrator
-userRouter.get("/admin", is_account_admin);
+userRouter.get("/admin", verify_token, is_account_admin);
 
 // Get an email for an account
-userRouter.get("/email", get_email);
+userRouter.get("/email", verify_token, get_email);
 
 // Update an email for an account
-userRouter.patch("/email", update_email);
+userRouter.patch("/email", verify_token, update_email);
 
 // Add an email to an account
-userRouter.post("/email", add_email);
+userRouter.post("/email", verify_token, add_email);

@@ -5,6 +5,7 @@ import {
   rename_product,
   delete_product,
 } from "../controller/product.controllers";
+import { verify_token } from "../common/security";
 
 // A router for product specific api calls
 export const productRouter: Router = Router();
@@ -13,10 +14,10 @@ export const productRouter: Router = Router();
 productRouter.get("/", get_all_products);
 
 // Used for creating a new product, should have a unique name supplied
-productRouter.post("/", add_product);
+productRouter.post("/", verify_token, add_product);
 
 // Used for renaming a product, with a new unique name
-productRouter.patch("/:id", rename_product);
+productRouter.patch("/:id", verify_token, rename_product);
 
 // Used for deleting a product
-productRouter.delete("/:id", delete_product);
+productRouter.delete("/:id", verify_token, delete_product);
