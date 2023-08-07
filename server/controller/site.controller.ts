@@ -1,32 +1,39 @@
 import { Request, Response } from "express";
-import { getDatabase } from "../data/database";
 import { PRODUCT_ID_MISSING_MSG } from "../common/product";
 import { SITE_ID_MISSING_MSG, SITE_LINK_MISSING_MSG } from "../common/site";
-import sqlite3 from "sqlite3";
 import {
   BAD_REQUEST_CODE,
   INTERNAL_SERVER_ERROR_CODE,
+  UNAUTHORIZED_REQUEST_CODE,
 } from "../common/status_codes";
-
-const db = getDatabase();
+import {
+  createSite,
+  deleteSite,
+  getAllSites,
+  getAllSitesForProductWithId,
+  getSiteWithId,
+  renameSite,
+} from "../models/site.models";
+import { isUserAdmin } from "../models/user.models";
 
 /**
  * Gets all sites that are used for scraping
  * @param req The request object
  * @param res The response object
  */
-const get_all_sites = async (_req: Request, res: Response) => {
-  db.all(
-    `SELECT Id, Site_link AS 'Site Link', Product_Id AS 'Product Id' FROM Sources`,
-    (err, rows) => {
-      if (err) {
+const get_all_sites = async (req: Request, res: Response) => {
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    getAllSites()
+      .then((sites) => {
+        res.json(sites);
+      })
+      .catch((err) => {
         console.error(err);
         res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-      } else {
-        res.json(rows);
-      }
-    }
-  );
+      });
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+  }
 };
 
 /**
@@ -36,23 +43,22 @@ const get_all_sites = async (_req: Request, res: Response) => {
  * @param product_id The product Id to get the sites for
  */
 const get_all_sites_for_product = async (
-  _req: Request,
+  req: Request,
   res: Response,
   product_id: string
 ) => {
-  db.all(
-    `SELECT Id, Site_link AS 'Site Link', Product_Id AS 'Product Id'
-    FROM Sources WHERE Product_Id = ?`,
-    product_id,
-    (err, rows) => {
-      if (err) {
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    getAllSitesForProductWithId(Number(product_id))
+      .then((site_entries) => {
+        res.json(site_entries);
+      })
+      .catch((err) => {
         console.error(err);
         res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-      } else {
-        res.json(rows);
-      }
-    }
-  );
+      });
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+  }
 };
 
 /**
@@ -81,46 +87,33 @@ export const get_sites = async (req: Request, res: Response) => {
  * @param res The response object
  */
 export const add_site = async (req: Request, res: Response) => {
-  const site_link = req.body["Site Link"];
-  const product_id = req.body["ProductId"];
-  if (typeof site_link !== "undefined" && typeof product_id !== "undefined") {
-    db.run(
-      `INSERT INTO Sources (Product_Id, Site_link) Values (?, ?)`,
-      [product_id, site_link],
-      function (err) {
-        if (err) {
-          const errorWithNumber = err as { errno?: number };
-          if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
-            if (
-              err.message === "SQLITE_CONSTRAINT: FOREIGN KEY constraint failed"
-            ) {
-              res
-                .status(BAD_REQUEST_CODE)
-                .send(`Product: ${product_id} does not exist`);
-            } else {
-              res
-                .status(BAD_REQUEST_CODE)
-                .send(`${site_link} already linked to product: ${product_id}`);
-            }
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    const site_link = req.body["Site Link"];
+    const product_id = req.body["ProductId"];
+    if (typeof site_link === "string" && typeof product_id === "number") {
+      createSite(site_link.trim().toLowerCase(), product_id)
+        .then((site_created) => {
+          if (site_created) {
+            res.send(`Site: ${site_link} added`);
           } else {
-            console.error(err);
-            res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+            res
+              .status(BAD_REQUEST_CODE)
+              .send(
+                "Product already has site linked or product does not exist"
+              );
           }
-        } else {
-          if (this.changes > 0) {
-            res.send(`${site_link} added for product: ${product_id}`);
-          } else {
-            res.send(
-              `${site_link} could not be added for product: ${product_id}`
-            );
-          }
-        }
-      }
-    );
-  } else if (typeof site_link !== "undefined") {
-    res.status(BAD_REQUEST_CODE).send(SITE_LINK_MISSING_MSG);
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+        });
+    } else if (typeof site_link !== "string") {
+      res.status(BAD_REQUEST_CODE).send(SITE_LINK_MISSING_MSG);
+    } else {
+      res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
+    }
   } else {
-    res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   }
 };
 
@@ -130,23 +123,26 @@ export const add_site = async (req: Request, res: Response) => {
  * @param res The response object
  */
 export const get_site_with_id = async (req: Request, res: Response) => {
-  const { site_id } = req.params;
-  if (typeof site_id === "undefined") {
-    res.status(BAD_REQUEST_CODE).send(SITE_ID_MISSING_MSG);
-  } else {
-    db.get(
-      `SELECT Id, Site_link AS 'Site Link', Product_Id AS 'Product Id'
-    FROM Sources WHERE Id = ?`,
-      site_id,
-      (err, row) => {
-        if (err) {
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    const { site_id } = req.params;
+    if (typeof site_id === "undefined") {
+      res.status(BAD_REQUEST_CODE).send(SITE_ID_MISSING_MSG);
+    } else {
+      getSiteWithId(Number(site_id))
+        .then((site_entry) => {
+          if (site_entry === null) {
+            res.status(BAD_REQUEST_CODE).json({});
+          } else {
+            res.json(site_entry);
+          }
+        })
+        .catch((err) => {
           console.error(err);
-          res.status(BAD_REQUEST_CODE).send("Database error");
-        } else {
-          res.json(row);
-        }
-      }
-    );
+          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+        });
+    }
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   }
 };
 
@@ -156,55 +152,56 @@ export const get_site_with_id = async (req: Request, res: Response) => {
  * @param res The response object
  */
 export const remove_site = async (req: Request, res: Response) => {
-  const { site_id } = req.params;
-  if (typeof site_id === "undefined") {
-    res.status(BAD_REQUEST_CODE).send(SITE_ID_MISSING_MSG);
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    const { site_id } = req.params;
+    if (typeof site_id === "undefined") {
+      res.status(BAD_REQUEST_CODE).send(SITE_ID_MISSING_MSG);
+    } else {
+      deleteSite(Number(site_id))
+        .then((site_deleted) => {
+          if (site_deleted) {
+            res.send("Site deleted");
+          } else {
+            res
+              .status(BAD_REQUEST_CODE)
+              .send("Site could not be deleted because it does not exist");
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+        });
+    }
   } else {
-    db.run(`DELETE FROM Sources WHERE Id = ?`, site_id, function (err) {
-      if (err) {
-        console.error(err);
-        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-      } else {
-        if (this.changes > 0) {
-          res.send(`Site: ${site_id} deleted`);
-        } else {
-          res.send(
-            `Site: ${site_id} couldn't be deleted, because it does not exist`
-          );
-        }
-      }
-    });
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   }
 };
 
 export const rename_site = async (req: Request, res: Response) => {
-  const { site_id } = req.params;
-  const new_site_link = req.body["Site Link"];
-  if (typeof site_id !== "undefined" && typeof new_site_link !== "undefined") {
-    db.run(
-      `UPDATE Sources SET Site_link = ? WHERE Id = ?`,
-      [new_site_link, site_id],
-      function (err) {
-        if (err) {
-          const errorWithNumber = err as { errno?: number };
-          if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    const { site_id } = req.params;
+    const new_site_link = req.body["Site Link"];
+    if (typeof site_id !== "undefined" && typeof new_site_link === "string") {
+      renameSite(Number(site_id), new_site_link.trim().toLowerCase())
+        .then((site_renamed) => {
+          if (site_renamed) {
+            res.send(`Site renamed to: ${new_site_link}`);
+          } else {
             res
               .status(BAD_REQUEST_CODE)
-              .send(`${new_site_link} is already linked to this product`);
-          } else {
-            res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-            console.error(err);
+              .send(
+                "Site could not be renamed, because either the site does not exist, or that site already exists"
+              );
           }
-        } else {
-          if (this.changes > 0) {
-            res.send(`Site: ${site_id} link updated to: ${new_site_link}`);
-          } else {
-            res.send(
-              `Site: ${site_id} could not be updated, because it does not exist`
-            );
-          }
-        }
-      }
-    );
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+        });
+    } else {
+      res.status(BAD_REQUEST_CODE).send("Missing parameters");
+    }
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   }
 };
