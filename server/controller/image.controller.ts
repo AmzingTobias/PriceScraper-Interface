@@ -155,14 +155,14 @@ export const remove_image_from_product = async (
  * @param res The response object
  */
 export const get_image_for_product = async (req: Request, res: Response) => {
-  const product_id = req.body["ProductId"];
+  const product_id = req.query["ProductId"];
   if (typeof product_id === "undefined") {
     res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
   } else {
-    getImageWithProductId(product_id)
+    getImageWithProductId(Number(product_id))
       .then((image_entry) => {
         if (image_entry === null) {
-          res.json({});
+          res.json(null);
         } else {
           res.json(image_entry);
         }
