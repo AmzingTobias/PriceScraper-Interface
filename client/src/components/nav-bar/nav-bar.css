@@ -116,6 +116,7 @@ header.sticky {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    z-index: 1000;
     gap: 1.5rem;
     background-color: var(--main-color);
     transition: 1s;
