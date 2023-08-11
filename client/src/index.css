@@ -12,6 +12,7 @@ body {
   background: linear-gradient(180deg, rgba(45,4,139,1) 0%, rgba(33,90,169,1) 26%, rgba(0,212,255,1) 100%);
   background-size: cover;
   min-height: 100vh;
+
 }
 
 code {

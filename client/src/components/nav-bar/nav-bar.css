@@ -6,7 +6,7 @@
 }
 
 :root {
-  --main-color: #29335c;
+  --main-color: rgb(41, 51, 91);
   --main-color-light: #5767aa;
   --secondary-color: #db2b39;
   --text-color: #eee;
@@ -18,16 +18,15 @@ header {
   justify-content: left;
   height: 80px;
   padding: 0 2rem;
-  background-color: var(--main-color);
   color: var(--text-color);
   background: rgba(87, 103, 170, 0.5);
 }
 
-header h2 {
+header h1 {
   margin-right: 30px;
 }
 
-header h2:hover {
+header h1:hover {
   color: var(--secondary-color);
   cursor: pointer;
 }
@@ -72,6 +71,27 @@ header .account-settings-btn:hover {
 
 header nav {
   display: contents;
+}
+
+header.sticky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* Adjust the z-index as needed */
+  animation: fadeInDown 0.5s ease;
+  background: rgba(58, 64, 157, 0.98);
+}
+
+@keyframes fadeInDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @media only screen and (max-width: 1024px) {

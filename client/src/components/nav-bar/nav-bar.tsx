@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { MdOutlineAccountCircle, MdOutlineSettings } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
@@ -6,14 +6,18 @@ import "./nav-bar.css";
 import { IconContext } from "react-icons";
 
 function NavBar() {
-  const loggedIn: boolean = true;
+  const loggedIn: boolean = false;
 
   const navRef = useRef<HTMLElement | null>(null);
 
   const navigate = useNavigate();
 
   const goHome = () => {
-    navigate("/", { replace: true });
+    navigate("/", { replace: false });
+  };
+
+  const goToLogin = () => {
+    navigate("/login", { replace: false });
   };
 
   const showNavbar = () => {
@@ -22,9 +26,26 @@ function NavBar() {
     }
   };
 
+  const [isNavSticky, setIsNavSticky] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        setIsNavSticky(true);
+      } else {
+        setIsNavSticky(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  });
+
   return (
-    <header>
-      <h2 onClick={goHome}>PriceScraper</h2>
+    <header className={isNavSticky ? "sticky" : ""}>
+      <h1 onClick={goHome}>PriceScraper</h1>
       <nav ref={navRef}>
         <button
           className={
@@ -32,6 +53,7 @@ function NavBar() {
               ? "nav-btn account-btn account-settings-btn"
               : "nav-btn account-btn"
           }
+          onClick={goToLogin}
         >
           <IconContext.Provider value={{ size: "2em" }}>
             {loggedIn ? <MdOutlineSettings /> : <MdOutlineAccountCircle />}

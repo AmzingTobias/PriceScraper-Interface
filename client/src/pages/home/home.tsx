@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import ProductGrid from "../components/product-grid/product-grid";
+import ProductGrid from "../../components/product-grid/product-grid";
 import "./home.css";
-import { TProductCard } from "../components/product-card/product-card";
-import { tProductEntry } from "../../../server/models/product.models";
+import { TProductCard } from "../../components/product-card/product-card";
+import { tProductEntry } from "../../../../server/models/product.models";
 
 const HomePage = () => {
   const [productData, setProductData] = useState<TProductCard[]>([]);

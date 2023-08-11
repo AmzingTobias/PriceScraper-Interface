@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import NavBar from "./components/nav-bar/nav-bar";
 import { Route, Routes } from "react-router-dom";
-import HomePage from "./pages/home";
+import HomePage from "./pages/home/home";
 
 export default function App() {
   const [backendData, setBackendData] = useState([]);
