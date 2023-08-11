@@ -13,16 +13,26 @@ function NavBar() {
   const navigate = useNavigate();
 
   const goHome = () => {
+    closeNavbarIfOpen();
     navigate("/", { replace: false });
   };
 
   const goToLogin = () => {
+    closeNavbarIfOpen();
     navigate("/login", { replace: false });
   };
 
   const showNavbar = () => {
     if (navRef.current) {
       navRef.current.classList.toggle("responsive_nav");
+    }
+  };
+
+  const closeNavbarIfOpen = () => {
+    if (navRef.current) {
+      if (navRef.current.classList.contains("responsive_nav")) {
+        navRef.current.classList.toggle("responsive_nav");
+      }
     }
   };
 
