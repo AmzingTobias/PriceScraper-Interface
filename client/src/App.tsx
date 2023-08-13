@@ -5,6 +5,7 @@ import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/home/home";
 import LoginPage from "./pages/login/login";
 import { useCookies } from "react-cookie";
+import ProductPage from "./pages/product/product";
 
 function useStateAuthCookie(initialValue: any): [any, React.Dispatch<any>] {
   const AUTH_TOKEN_NAME = "auth-token";
@@ -38,6 +39,10 @@ export default function App() {
           <Route
             path="/login"
             Component={() => LoginPage({ setUserAuthToken: setUserAuthToken })}
+          />
+          <Route
+            path="/product/:productId"
+            Component={() => ProductPage(userAuthToken)}
           />
         </Routes>
       </div>
