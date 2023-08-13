@@ -32,9 +32,7 @@ export const create_account = async (req: Request, res: Response) => {
         if (created) {
           res.json(`User: ${username_lower} created`);
         } else {
-          res
-            .status(BAD_REQUEST_CODE)
-            .json(`User: ${username_lower} already exists`);
+          res.status(BAD_REQUEST_CODE).json(`User already exists`);
         }
       })
       .catch((err) => {

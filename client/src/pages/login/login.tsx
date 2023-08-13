@@ -1,13 +1,15 @@
-import { IconContext } from "react-icons";
-import ContentBox from "../../components/login-box/login-box";
-import { AiOutlineUser } from "react-icons/ai";
+import LoginBox from "../../components/login-box/login-box";
 
-const LoginPage = () => {
+interface ILoginPageProps {
+  setUserAuthToken: React.Dispatch<React.SetStateAction<string>>;
+}
+
+const LoginPage: React.FC<ILoginPageProps> = (props) => {
   return (
     <div>
-      <ContentBox style={{}}>
+      <LoginBox setUserAuthToken={props.setUserAuthToken}>
         <></>
-      </ContentBox>
+      </LoginBox>
     </div>
   );
 };

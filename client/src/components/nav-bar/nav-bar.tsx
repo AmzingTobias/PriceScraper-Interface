@@ -5,8 +5,12 @@ import { useNavigate } from "react-router-dom";
 import "./nav-bar.css";
 import { IconContext } from "react-icons";
 
-function NavBar() {
-  const loggedIn: boolean = false;
+interface INavBarProps {
+  authToken: string;
+}
+
+const NavBar: React.FC<INavBarProps> = (props) => {
+  const loggedIn: boolean = props.authToken !== "";
 
   const navRef = useRef<HTMLElement | null>(null);
 
@@ -20,6 +24,11 @@ function NavBar() {
   const goToLogin = () => {
     closeNavbarIfOpen();
     navigate("/login", { replace: false });
+  };
+
+  const goToSettings = () => {
+    closeNavbarIfOpen();
+    navigate("/settings", { replace: false });
   };
 
   const showNavbar = () => {
@@ -63,7 +72,7 @@ function NavBar() {
               ? "nav-btn account-btn account-settings-btn"
               : "nav-btn account-btn"
           }
-          onClick={goToLogin}
+          onClick={loggedIn ? goToSettings : goToLogin}
         >
           <IconContext.Provider value={{ size: "2em" }}>
             {loggedIn ? <MdOutlineSettings /> : <MdOutlineAccountCircle />}
@@ -78,6 +87,6 @@ function NavBar() {
       </button>
     </header>
   );
-}
+};
 
 export default NavBar;
