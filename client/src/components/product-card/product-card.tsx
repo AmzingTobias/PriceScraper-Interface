@@ -12,7 +12,6 @@ interface IProductCardProps {
 }
 
 const ProductCard: React.FC<IProductCardProps> = ({ product_info }) => {
-  console.log(product_info);
   if (product_info.image_link === null) {
     product_info.image_link = product_card_missing;
   }
