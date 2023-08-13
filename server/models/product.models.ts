@@ -9,13 +9,41 @@ export type tProductEntry = {
 };
 
 /**
+ * Get a product
+ * @param productId The Id of the product to get
+ * @returns A promise with a product Id entry if one exists, or null if no product exists. Rejects
+ * on database errors
+ */
+export const getProductWithId = (
+  productId: string | number
+): Promise<tProductEntry | null> => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      "SELECT Id, Name FROM Products WHERE Id = ?",
+      productId,
+      (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          if (row === undefined) {
+            resolve(null);
+          } else {
+            resolve(row as tProductEntry);
+          }
+        }
+      }
+    );
+  });
+};
+
+/**
  * Get all products that exist in the database
  * @returns A promise for a list of all product entries in the database. Rejects on
  * any database errors
  */
 export const getAllProducts = (): Promise<tProductEntry[]> => {
   return new Promise((resolve, reject) => {
-    db.all(`SELECT Id, Name FROM Products ORDER BY ID`, (err, rows) => {
+    db.all(`SELECT Id, Name FROM Products ORDER BY Id`, (err, rows) => {
       if (err) {
         reject(err);
       } else {

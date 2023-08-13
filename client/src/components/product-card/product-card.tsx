@@ -1,6 +1,6 @@
 import "./product-card.css";
 import product_card_missing from "../../assets/product_card_missing.png";
-import { redirect, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export type TProductCard = {
   id: number;
