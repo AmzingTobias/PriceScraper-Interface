@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { redirect, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { tProductEntry } from "../../../../server/models/product.models";
+import { tImageEntry } from "../../../../server/models/image.models";
+import product_card_missing from "../../assets/product_card_missing.png";
 
 interface IProductPageProps {
   authToken: string;
@@ -18,6 +20,26 @@ const getProductName = (productId: string): Promise<string | null> => {
       }
     } catch {
       reject("Error");
+    }
+  });
+};
+
+const getProductImageLink = (productId: string): Promise<string> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const imageResponse = await fetch(`/api/images/product/${productId}`);
+      if (imageResponse.ok) {
+        const imageJson: tImageEntry = await imageResponse.json();
+        if (imageJson === null) {
+          resolve(product_card_missing);
+        } else {
+          resolve(imageJson.Link);
+        }
+      } else {
+        reject("Error with image request");
+      }
+    } catch {
+      reject("Error with image request");
     }
   });
 };
@@ -47,11 +69,30 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
       }
     };
     fetchProductName(productId);
-  }, [productId]);
+  });
+
+  const [productImage, setProductImage] =
+    useState<string>(product_card_missing);
+  useEffect(() => {
+    if (productId === undefined) {
+      navigate("/", { replace: false });
+      return;
+    }
+    const fetchProductImage = async (productId: string) => {
+      try {
+        const image = await getProductImageLink(productId);
+        setProductImage(image);
+      } catch {
+        navigate("/", { replace: false });
+      }
+    };
+    fetchProductImage(productId);
+  });
 
   return (
     <>
       <h1>{productName}</h1>
+      <img width={250} height={370} src={productImage} alt="Product card"></img>
     </>
   );
 };

@@ -88,13 +88,13 @@ export const remove_image = async (req: Request, res: Response) => {
  */
 export const set_image_for_product = async (req: Request, res: Response) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
-    const product_id = req.body["ProductId"];
+    const { productId } = req.params;
     const image_id = req.body["ImageId"];
-    if (typeof product_id === "number" && typeof image_id === "number") {
-      linkProductToImage(image_id, product_id)
+    if (typeof productId === "number" && typeof image_id === "number") {
+      linkProductToImage(image_id, productId)
         .then((linked) => {
           if (linked) {
-            res.send(`Product: ${product_id} linked to image: ${image_id}`);
+            res.send(`Product: ${productId} linked to image: ${image_id}`);
           } else {
             res
               .status(BAD_REQUEST_CODE)
@@ -105,7 +105,7 @@ export const set_image_for_product = async (req: Request, res: Response) => {
           console.error(err);
           res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
         });
-    } else if (typeof product_id !== "number") {
+    } else if (typeof productId !== "number") {
       res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
     } else {
       res.status(BAD_REQUEST_CODE).send(IMAGE_ID_MISSING_MSG);
@@ -125,18 +125,18 @@ export const remove_image_from_product = async (
   res: Response
 ) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
-    const product_id = req.body["ProductId"];
-    if (typeof product_id === "undefined") {
+    const { productId } = req.params;
+    if (typeof productId === "undefined") {
       res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
     } else {
-      unlinkProductFromImage(product_id)
+      unlinkProductFromImage(Number(productId))
         .then((unlinked) => {
           if (unlinked) {
-            res.send(`Product: ${product_id} unlinked from image`);
+            res.send(`Product: ${productId} unlinked from image`);
           } else {
             res
               .status(BAD_REQUEST_CODE)
-              .send(`Product: ${product_id} does not exist`);
+              .send(`Product: ${productId} does not exist`);
           }
         })
         .catch((err) => {
@@ -155,11 +155,11 @@ export const remove_image_from_product = async (
  * @param res The response object
  */
 export const get_image_for_product = async (req: Request, res: Response) => {
-  const product_id = req.query["ProductId"];
-  if (typeof product_id === "undefined") {
+  const { productId } = req.params;
+  if (typeof productId === "undefined") {
     res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
   } else {
-    getImageWithProductId(Number(product_id))
+    getImageWithProductId(Number(productId))
       .then((image_entry) => {
         if (image_entry === null) {
           res.json(null);
