@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { MdOutlineAccountCircle, MdOutlineSettings } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import "./nav-bar.css";
 import { IconContext } from "react-icons";
 
 interface INavBarProps {
@@ -17,60 +16,31 @@ const NavBar: React.FC<INavBarProps> = (props) => {
   const navigate = useNavigate();
 
   const goHome = () => {
-    closeNavbarIfOpen();
     navigate("/", { replace: false });
   };
 
   const goToLogin = () => {
-    closeNavbarIfOpen();
     navigate("/login", { replace: false });
   };
 
   const goToSettings = () => {
-    closeNavbarIfOpen();
     navigate("/settings", { replace: false });
   };
 
-  const showNavbar = () => {
-    if (navRef.current) {
-      navRef.current.classList.toggle("responsive_nav");
-    }
-  };
-
-  const closeNavbarIfOpen = () => {
-    if (navRef.current) {
-      if (navRef.current.classList.contains("responsive_nav")) {
-        navRef.current.classList.toggle("responsive_nav");
-      }
-    }
-  };
-
-  const [isNavSticky, setIsNavSticky] = useState<boolean>(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 0) {
-        setIsNavSticky(true);
-      } else {
-        setIsNavSticky(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  });
-
   return (
-    <header className={isNavSticky ? "sticky" : ""}>
-      <h1 onClick={goHome}>PriceScraper</h1>
-      <nav ref={navRef}>
+    <header className="flex items-center px-8 text-neutral-200 h-20 bg-purple-700 bg-opacity-30">
+      <h1
+        onClick={goHome}
+        className="text-3xl font-bold hover:text-red-500 hover:cursor-pointer mr-7"
+      >
+        PriceScraper
+      </h1>
+      <nav ref={navRef} className="contents">
         <button
           className={
             loggedIn
-              ? "nav-btn account-btn account-settings-btn"
-              : "nav-btn account-btn"
+              ? "nav-btn account-btn ml-auto account-settings-btn hover:rotate-60 hover:transition hover:duration-1000"
+              : "nav-btn account-btn ml-auto"
           }
           onClick={loggedIn ? goToSettings : goToLogin}
         >
@@ -78,13 +48,7 @@ const NavBar: React.FC<INavBarProps> = (props) => {
             {loggedIn ? <MdOutlineSettings /> : <MdOutlineAccountCircle />}
           </IconContext.Provider>
         </button>
-        <button className="nav-btn nav-close-btn" onClick={showNavbar}>
-          <FaTimes />
-        </button>
       </nav>
-      <button className="nav-btn" onClick={showNavbar}>
-        <FaBars />
-      </button>
     </header>
   );
 };
