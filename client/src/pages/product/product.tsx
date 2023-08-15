@@ -4,12 +4,16 @@ import { tProductEntry } from "../../../../server/models/product.models";
 import { tImageEntry } from "../../../../server/models/image.models";
 import { tPriceEntry } from "../../../../server/models/price.models";
 import product_card_missing from "../../assets/product_card_missing.png";
+import ProductTitle from "../../components/product-details/product-title";
+import ProductImage from "../../components/product-details/product-image";
+import ProductNotifyBtn from "../../components/product-details/product-notify-btn";
+import ProductPrice from "../../components/product-details/product-price";
 
 interface IProductPageProps {
   authToken: string;
 }
 
-const getProductName = (productId: string): Promise<string | null> => {
+const getProductName = (productId: string): Promise<string> => {
   return new Promise(async (resolve, reject) => {
     try {
       const productResponse = await fetch(`/api/products/${productId}`);
@@ -17,7 +21,7 @@ const getProductName = (productId: string): Promise<string | null> => {
         const productJson: tProductEntry = await productResponse.json();
         resolve(productJson.Name);
       } else {
-        resolve(null);
+        resolve("");
       }
     } catch {
       reject("Error");
@@ -71,7 +75,7 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
 
   const navigate = useNavigate();
   const { productId } = useParams();
-  const [productName, setProductName] = useState<string | null>(null);
+  const [productName, setProductName] = useState<string>("");
   useEffect(() => {
     if (productId === undefined) {
       navigate("/", { replace: false });
@@ -125,8 +129,21 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
 
   return (
     <>
-      <h1>{productName}</h1>
-      <img width={250} height={370} src={productImage} alt="Product card"></img>
+      <ProductTitle productName={productName} />
+      <ProductImage
+        imageLink={productImage}
+        width={420}
+        height={600}
+        alt="Product card"
+      />
+      <ProductNotifyBtn btnText={"Buy Me!"} />
+      <ProductPrice
+        price={
+          productPrices.length > 0
+            ? productPrices[productPrices.length - 1].Price
+            : 0
+        }
+      />
     </>
   );
 };

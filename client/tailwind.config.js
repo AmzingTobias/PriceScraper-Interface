@@ -6,6 +6,9 @@ module.exports = {
       rotate: {
         60: "60deg",
       },
+      boxShadow: {
+        fillInsideRoundedFull: "inset 0 0 0 9999px",
+      },
     },
   },
   plugins: [],
