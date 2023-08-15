@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { tProductEntry } from "../../../../server/models/product.models";
 import { tImageEntry } from "../../../../server/models/image.models";
+import { tPriceEntry } from "../../../../server/models/price.models";
 import product_card_missing from "../../assets/product_card_missing.png";
 
 interface IProductPageProps {
@@ -40,6 +41,22 @@ const getProductImageLink = (productId: string): Promise<string> => {
       }
     } catch {
       reject("Error with image request");
+    }
+  });
+};
+
+const getAllPricesForProduct = (productId: string): Promise<tPriceEntry[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const priceResponse = await fetch(`/api/prices/${productId}`);
+      if (priceResponse.ok) {
+        const priceJsonResponse: tPriceEntry[] = await priceResponse.json();
+        resolve(priceJsonResponse);
+      } else {
+        reject("Error with price request, product doesn't exist");
+      }
+    } catch {
+      reject("Error with price request");
     }
   });
 };
@@ -87,6 +104,23 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
       }
     };
     fetchProductImage(productId);
+  });
+
+  const [productPrices, setProductPrices] = useState<tPriceEntry[]>([]);
+  useEffect(() => {
+    if (productId === undefined) {
+      navigate("/", { replace: false });
+      return;
+    }
+    const fetchProductPrices = async (productId: string) => {
+      try {
+        const prices = await getAllPricesForProduct(productId);
+        setProductPrices(prices);
+      } catch {
+        navigate("/", { replace: false });
+      }
+    };
+    fetchProductPrices(productId);
   });
 
   return (
