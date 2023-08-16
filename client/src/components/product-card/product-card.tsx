@@ -25,8 +25,9 @@ const ProductCard: React.FC<IProductCardProps> = ({ product_info }) => {
   return (
     <div className="product-card">
       <img
-        width={245}
-        height={340}
+        width={320}
+        height={480}
+        style={{ width: 245, height: 340 }}
         onClick={goToProductPage}
         src={product_info.image_link}
         alt={

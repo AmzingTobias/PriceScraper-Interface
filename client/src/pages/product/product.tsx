@@ -1,13 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { tProductEntry } from "../../../../server/models/product.models";
 import { tImageEntry } from "../../../../server/models/image.models";
 import { tPriceEntry } from "../../../../server/models/price.models";
 import product_card_missing from "../../assets/product_card_missing.png";
-import ProductTitle from "../../components/product-details/product-title";
-import ProductImage from "../../components/product-details/product-image";
-import ProductNotifyBtn from "../../components/product-details/product-notify-btn";
-import ProductPrice from "../../components/product-details/product-price";
+import ProductDetails from "../../components/product-details/product-details";
 
 interface IProductPageProps {
   authToken: string;
@@ -127,23 +124,23 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
     fetchProductPrices(productId);
   });
 
+  const synopsis =
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+
   return (
     <>
-      <ProductTitle productName={productName} />
-      <ProductImage
-        imageLink={productImage}
-        width={420}
-        height={600}
-        alt="Product card"
-      />
-      <ProductNotifyBtn btnText={"Buy Me!"} />
-      <ProductPrice
-        price={
-          productPrices.length > 0
-            ? productPrices[productPrices.length - 1].Price
-            : 0
-        }
-      />
+      <div
+        className="product-details-box text-neutral-200 bg-gray-800 
+      flex flex-row rounded-2xl px-4 py-4 w-3/5
+      inset-x-2/4 -translate-x-1/2 absolute mt-16"
+      >
+        <ProductDetails
+          name={productName}
+          synopsis={synopsis}
+          image={productImage}
+          prices={productPrices}
+        />
+      </div>
     </>
   );
 };

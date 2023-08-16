@@ -18,7 +18,7 @@ const ProductImage: React.FC<IProductImageProps> = ({
         width={width}
         height={height}
         alt={alt}
-        style={{ width: width, height: height }}
+        style={{ width: width, height: height, maxWidth: width }}
       />
     </>
   );
