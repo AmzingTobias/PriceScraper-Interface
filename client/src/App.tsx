@@ -6,6 +6,7 @@ import HomePage from "./pages/home/home";
 import LoginPage from "./pages/login/login";
 import { useCookies } from "react-cookie";
 import ProductPage from "./pages/product/product";
+import { Chart, registerables } from "chart.js";
 
 function useStateAuthCookie(initialValue: any): [any, React.Dispatch<any>] {
   const AUTH_TOKEN_NAME = "auth-token";
@@ -30,10 +31,12 @@ function useStateAuthCookie(initialValue: any): [any, React.Dispatch<any>] {
 export default function App() {
   const [userAuthToken, setUserAuthToken] = useStateAuthCookie("");
 
+  Chart.register(...registerables);
+
   return (
     <div className="App">
       <NavBar authToken={userAuthToken} />
-      <div className="container">
+      <div className="">
         <Routes>
           <Route path="/" Component={HomePage} />
           <Route

@@ -42,19 +42,35 @@ const ProductDetails: React.FC<IProductDetailsProps> = ({
         <div className="flex flex-row">
           <div className="w-3/4">
             <ProductSynopsis synopsis={synopsis} />
-            <div className="mt-4">
-              <ProductPrice
-                price={prices.length > 0 ? prices[prices.length - 1].Price : 0}
-              />
-            </div>
+            {prices.length > 0 ? (
+              <div className="mt-4">
+                <ProductPrice
+                  price={
+                    prices.length > 0 ? prices[prices.length - 1].Price : 0
+                  }
+                  lowestPrice={
+                    prices.length > 0
+                      ? prices.reduce((minItem, currentItem) => {
+                          if (currentItem.Price < minItem.Price) {
+                            return currentItem;
+                          }
+                          return minItem;
+                        })
+                      : undefined
+                  }
+                />
+              </div>
+            ) : null}
             <form className="mt-2">
               <ProductNotifyBtn btnText={"Notify Me! ✔️"} />
             </form>
           </div>
           <div className="ml-auto">
-            <form onSubmit={goToPricePage} className="">
-              <ProductNotifyBtn btnText={"Go to Site!"} />
-            </form>
+            {prices.length > 0 ? (
+              <form onSubmit={goToPricePage} className="">
+                <ProductNotifyBtn btnText={"Go to Site!"} />
+              </form>
+            ) : null}
           </div>
         </div>
       </div>
