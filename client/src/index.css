@@ -21,6 +21,11 @@ body {
   min-height: 100vh;
 }
 
+html,
+body {
+  overscroll-behavior: none;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
