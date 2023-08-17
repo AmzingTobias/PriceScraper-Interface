@@ -3,6 +3,7 @@ import {
   add_discord_webhook,
   get_discord_webhook,
   get_notification_setting_for_user,
+  is_user_notified_for_product,
   link_user_to_product_for_notification,
   remove_discord_webhook,
   remove_user_notification_for_product,
@@ -48,3 +49,10 @@ notificationRouter.get(
 
 // Set the notification settings for a user
 notificationRouter.post("/user", verify_token, set_notifications_settings);
+
+// Get if a user is being notified for a product
+notificationRouter.get(
+  "/product/:productId",
+  verify_token,
+  is_user_notified_for_product
+);

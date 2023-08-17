@@ -277,3 +277,33 @@ export const getDiscordWebhookWithUserId = (
     );
   });
 };
+
+/**
+ * Check to see if a user is being notified for a given product
+ * @param user_Id The user Id to check for
+ * @param product_id The product Id to check for
+ * @returns A boolean promise, true if the user is assigned to receive notifications for a product. False otherwise.
+ * Rejects on database errors
+ */
+export const isUserBeingNotifiedForProduct = (
+  user_Id: number | string,
+  product_id: number | string
+): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      "SELECT Id FROM Product_notifications WHERE Product_Id = ? AND User_Id = ?",
+      [product_id, user_Id],
+      (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          if (row === undefined) {
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        }
+      }
+    );
+  });
+};
