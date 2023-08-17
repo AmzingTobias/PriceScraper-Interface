@@ -63,6 +63,28 @@ const getAllPricesForProduct = (productId: string): Promise<tPriceEntry[]> => {
   });
 };
 
+const isUserNotifiedForProduct = (
+  productId: string,
+  authToken: string
+): Promise<boolean> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const notifiedResponse = await fetch(
+        `/api/notifications/product/${productId}`,
+        { headers: { authorization: authToken } }
+      );
+      if (notifiedResponse.ok) {
+        const notificationJson = await notifiedResponse.json();
+        resolve(notificationJson);
+      } else {
+        reject("Error with request, probably not logged in");
+      }
+    } catch {
+      reject("Error with notification request");
+    }
+  });
+};
+
 const ProductPage: React.FC<IProductPageProps> = (props) => {
   // Show product picture
   // Show product name
@@ -88,7 +110,7 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
       }
     };
     fetchProductName(productId);
-  });
+  }, [navigate, productId]);
 
   const [productImage, setProductImage] =
     useState<string>(product_card_missing);
@@ -106,7 +128,7 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
       }
     };
     fetchProductImage(productId);
-  });
+  }, [navigate, productId]);
 
   const [productPrices, setProductPrices] = useState<tPriceEntry[]>([]);
   useEffect(() => {
@@ -123,7 +145,27 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
       }
     };
     fetchProductPrices(productId);
-  });
+  }, [navigate, productId]);
+
+  const [userNotifiedForProduct, setUserNotifiedForProduct] = useState(false);
+  useEffect(() => {
+    if (productId === undefined) {
+      navigate("/", { replace: false });
+      return;
+    }
+    const fetchNotifiedForProduct = async (productId: string) => {
+      try {
+        const notifiedForProduct = await isUserNotifiedForProduct(
+          productId,
+          props.authToken
+        );
+        setUserNotifiedForProduct(notifiedForProduct);
+      } catch {
+        setUserNotifiedForProduct(false);
+      }
+    };
+    fetchNotifiedForProduct(productId);
+  }, [navigate, productId, props.authToken]);
 
   const synopsis =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
@@ -135,10 +177,13 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
       flex flex-row rounded-2xl p-4 w-3/5 mt-8"
         >
           <ProductDetails
+            productId={productId === undefined ? -1 : Number(productId)}
             name={productName}
             synopsis={synopsis}
             image={productImage}
             prices={productPrices}
+            userNotifiedForProduct={userNotifiedForProduct}
+            setUserNotifiedForProduct={setUserNotifiedForProduct}
           />
         </div>
         {productPrices.length > 1 ? (

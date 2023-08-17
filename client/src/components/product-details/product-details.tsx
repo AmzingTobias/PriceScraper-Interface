@@ -7,17 +7,67 @@ import ProductSynopsis from "./product-synposis";
 import ProductTitle from "./product-title";
 
 interface IProductDetailsProps {
+  productId: number;
   name: string;
   synopsis: string;
   image: string;
   prices: tPriceEntry[];
+  userNotifiedForProduct: boolean;
+  setUserNotifiedForProduct: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+function enableNotificationsRequest(productId: number): Promise<boolean> {
+  return new Promise(async (resolve, _reject) => {
+    try {
+      const requestBody = { ProductId: productId };
+      const notificationsEnabled = await fetch("/api/notifications/link", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+      if (notificationsEnabled.ok) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+function disableNotificationsRequest(productId: number): Promise<boolean> {
+  return new Promise(async (resolve, _reject) => {
+    try {
+      const requestBody = { ProductId: productId };
+      const notificationsDisabled = await fetch("/api/notifications/link", {
+        method: "DELETE",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+      if (notificationsDisabled.ok) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    } catch {
+      resolve(false);
+    }
+  });
 }
 
 const ProductDetails: React.FC<IProductDetailsProps> = ({
+  productId,
   name,
   synopsis,
   image,
   prices,
+  userNotifiedForProduct,
+  setUserNotifiedForProduct,
 }) => {
   const goToPricePage = (event: FormEvent) => {
     event.preventDefault();
@@ -26,6 +76,23 @@ const ProductDetails: React.FC<IProductDetailsProps> = ({
     }
   };
 
+  const enableNotifications = (event: FormEvent) => {
+    event.preventDefault();
+    enableNotificationsRequest(productId).then((enabled) => {
+      if (enabled) {
+        setUserNotifiedForProduct(true);
+      }
+    });
+  };
+
+  const disableNotifications = (event: FormEvent) => {
+    event.preventDefault();
+    disableNotificationsRequest(productId).then((disable) => {
+      if (disable) {
+        setUserNotifiedForProduct(false);
+      }
+    });
+  };
   return (
     <>
       <div className="">
@@ -61,9 +128,15 @@ const ProductDetails: React.FC<IProductDetailsProps> = ({
                 />
               </div>
             ) : null}
-            <form className="mt-2">
-              <ProductNotifyBtn btnText={"Notify Me! ✔️"} />
-            </form>
+            {userNotifiedForProduct ? (
+              <form className="mt-2" onSubmit={disableNotifications}>
+                <ProductNotifyBtn btnText={"Stop notifications ❌"} />
+              </form>
+            ) : (
+              <form className="mt-2" onSubmit={enableNotifications}>
+                <ProductNotifyBtn btnText={"Notify Me! ✔️"} />
+              </form>
+            )}
           </div>
           <div className="ml-auto">
             {prices.length > 0 ? (
