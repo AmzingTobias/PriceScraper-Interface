@@ -173,29 +173,37 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
     <>
       <div className="flex flex-col items-center">
         <div
-          className="product-details-box text-neutral-200 bg-gray-800 
-      flex flex-row rounded-2xl p-4 w-3/5 mt-8"
+          className="
+              w-11/12
+              xl:w-4/5
+              2xl:w-3/5
+              mt-8"
         >
-          <ProductDetails
-            productId={productId === undefined ? -1 : Number(productId)}
-            name={productName}
-            synopsis={synopsis}
-            image={productImage}
-            prices={productPrices}
-            userNotifiedForProduct={userNotifiedForProduct}
-            setUserNotifiedForProduct={setUserNotifiedForProduct}
-          />
-        </div>
-        {productPrices.length > 1 ? (
-          <div className="bg-gray-800 w-3/5 rounded-2xl p-8 my-8">
-            <h1 className="text-3xl font-bold text-neutral-200">
-              Price History
-            </h1>
-            <div className="w-full mt-4">
-              <ProductPriceHistory prices={productPrices} />
-            </div>
+          <div
+            className="product-details-box text-neutral-200 bg-gray-800 
+      flex flex-col rounded-2xl px-2 py-4 lg:p-4"
+          >
+            <ProductDetails
+              productId={productId === undefined ? -1 : Number(productId)}
+              name={productName}
+              synopsis={synopsis}
+              image={productImage}
+              prices={productPrices}
+              userNotifiedForProduct={userNotifiedForProduct}
+              setUserNotifiedForProduct={setUserNotifiedForProduct}
+            />
           </div>
-        ) : null}
+          {productPrices.length > 1 ? (
+            <div className="bg-gray-800 rounded-2xl p-2 lg:p-4 my-8">
+              <h1 className="text-3xl font-bold text-neutral-200">
+                Price History
+              </h1>
+              <div className="w-full mt-4 h-56 sm:h-72 lg:h-96">
+                <ProductPriceHistory prices={productPrices} />
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
     </>
   );

@@ -36,6 +36,8 @@ const ProductPriceHistory: React.FC<IProductPriceHistoryProps> = ({
   };
 
   const chartOptions: ChartOptions<"line"> = {
+    responsive: true,
+    maintainAspectRatio: false,
     scales: {
       x: {
         grid: {
@@ -89,9 +91,9 @@ const ProductPriceHistory: React.FC<IProductPriceHistoryProps> = ({
   };
 
   return (
-    <div>
+    <>
       <Line data={chartData} options={chartOptions} />
-    </div>
+    </>
   );
 };
 

@@ -95,55 +95,65 @@ const ProductDetails: React.FC<IProductDetailsProps> = ({
   };
   return (
     <>
-      <div className="">
-        <ProductImage
-          imageLink={image}
-          width={245}
-          height={340}
-          alt="Product card"
-        />
-      </div>
-      <div className="ml-4 mt-4 w-full">
-        <ProductTitle productName={name} />
-        <hr className="my-4 w-full" />
-        <div className="flex flex-row">
-          <div className="w-3/4">
-            <ProductSynopsis synopsis={synopsis} />
-            {prices.length > 0 ? (
-              <div className="mt-4">
-                <ProductPrice
-                  price={
-                    prices.length > 0 ? prices[prices.length - 1].Price : 0
-                  }
-                  lowestPrice={
-                    prices.length > 0
-                      ? prices.reduce((minItem, currentItem) => {
-                          if (currentItem.Price < minItem.Price) {
-                            return currentItem;
-                          }
-                          return minItem;
-                        })
-                      : undefined
-                  }
-                />
+      <div className="flex justify-center flex-col lg:flex-row">
+        <div className="mr-auto ml-auto">
+          <ProductImage
+            imageLink={image}
+            width={245}
+            height={340}
+            alt="Product card"
+          />
+        </div>
+        <div className="mx-2 mt-4 md:ml-4 md:mt-4 md:w-full">
+          <ProductTitle productName={name} />
+          <hr className="my-4 w-full" />
+          <div className="flex flex-col-reverse lg:flex-row">
+            <div className="w-full lg:w-3/4">
+              <ProductSynopsis synopsis={synopsis} />
+              <div className="md:flex md:flex-col ">
+                {prices.length > 0 ? (
+                  <div className="mt-4">
+                    <ProductPrice
+                      price={
+                        prices.length > 0 ? prices[prices.length - 1].Price : 0
+                      }
+                      lowestPrice={
+                        prices.length > 0
+                          ? prices.reduce((minItem, currentItem) => {
+                              if (currentItem.Price < minItem.Price) {
+                                return currentItem;
+                              }
+                              return minItem;
+                            })
+                          : undefined
+                      }
+                    />
+                  </div>
+                ) : null}
+                {userNotifiedForProduct ? (
+                  <form
+                    className="mt-2 mb-2 md:mt-4 lg:ml-2"
+                    onSubmit={disableNotifications}
+                  >
+                    <ProductNotifyBtn btnText={"Stop notifications ❌"} />
+                  </form>
+                ) : (
+                  <form
+                    className="mt-2 mb-2 md:mt-4 lg:ml-2"
+                    onSubmit={enableNotifications}
+                  >
+                    <ProductNotifyBtn btnText={"Notify Me! ✔️"} />
+                  </form>
+                )}
               </div>
-            ) : null}
-            {userNotifiedForProduct ? (
-              <form className="mt-2" onSubmit={disableNotifications}>
-                <ProductNotifyBtn btnText={"Stop notifications ❌"} />
-              </form>
-            ) : (
-              <form className="mt-2" onSubmit={enableNotifications}>
-                <ProductNotifyBtn btnText={"Notify Me! ✔️"} />
-              </form>
-            )}
-          </div>
-          <div className="ml-auto">
-            {prices.length > 0 ? (
-              <form onSubmit={goToPricePage} className="">
-                <ProductNotifyBtn btnText={"Go to Site!"} />
-              </form>
-            ) : null}
+            </div>
+            <div className="mb-4 lg:mb-0 lg:ml-auto">
+              {prices.length > 0 ? (
+                <form onSubmit={goToPricePage} className="">
+                  <ProductNotifyBtn btnText={"Go to Site!"} />
+                </form>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
