@@ -23,12 +23,12 @@ export const verify_token = (
   next: NextFunction
 ) => {
   if (
-    req.headers &&
-    req.headers.authorization &&
-    (req.headers.authorization as string).split(" ")[0] === "JWT"
+    req.cookies["auth-token"] &&
+    req.cookies["auth-token"] &&
+    (req.cookies["auth-token"] as string).split(" ")[0] === "JWT"
   ) {
     jwt.verify(
-      (req.headers.authorization as string).split(" ")[1],
+      (req.cookies["auth-token"] as string).split(" ")[1],
       process.env.API_SECRET as string,
       async function (err, decode) {
         if (err) {
