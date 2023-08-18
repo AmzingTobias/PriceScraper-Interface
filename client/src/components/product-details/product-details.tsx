@@ -14,6 +14,7 @@ interface IProductDetailsProps {
   prices: tPriceEntry[];
   userNotifiedForProduct: boolean;
   setUserNotifiedForProduct: React.Dispatch<React.SetStateAction<boolean>>;
+  authToken: string;
 }
 
 function enableNotificationsRequest(productId: number): Promise<boolean> {
@@ -68,6 +69,7 @@ const ProductDetails: React.FC<IProductDetailsProps> = ({
   prices,
   userNotifiedForProduct,
   setUserNotifiedForProduct,
+  authToken,
 }) => {
   const goToPricePage = (event: FormEvent) => {
     event.preventDefault();
@@ -93,6 +95,7 @@ const ProductDetails: React.FC<IProductDetailsProps> = ({
       }
     });
   };
+
   return (
     <>
       <div className="flex justify-center flex-col lg:flex-row">
@@ -130,7 +133,7 @@ const ProductDetails: React.FC<IProductDetailsProps> = ({
                     />
                   </div>
                 ) : null}
-                {userNotifiedForProduct ? (
+                {authToken === "" ? null : userNotifiedForProduct ? (
                   <form
                     className="mt-2 mb-2 md:mt-4 lg:ml-2"
                     onSubmit={disableNotifications}

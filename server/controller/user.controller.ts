@@ -99,7 +99,7 @@ export const login = async (req: Request, res: Response) => {
                 Id: user_account.Id,
               },
               process.env.API_SECRET as string,
-              { expiresIn: 86400 }
+              { expiresIn: "7d" }
             );
             res.status(200).json({ token: token });
           } else {

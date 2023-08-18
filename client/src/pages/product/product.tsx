@@ -63,15 +63,11 @@ const getAllPricesForProduct = (productId: string): Promise<tPriceEntry[]> => {
   });
 };
 
-const isUserNotifiedForProduct = (
-  productId: string,
-  authToken: string
-): Promise<boolean> => {
+const isUserNotifiedForProduct = (productId: string): Promise<boolean> => {
   return new Promise(async (resolve, reject) => {
     try {
       const notifiedResponse = await fetch(
-        `/api/notifications/product/${productId}`,
-        { headers: { authorization: authToken } }
+        `/api/notifications/product/${productId}`
       );
       if (notifiedResponse.ok) {
         const notificationJson = await notifiedResponse.json();
@@ -155,10 +151,7 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
     }
     const fetchNotifiedForProduct = async (productId: string) => {
       try {
-        const notifiedForProduct = await isUserNotifiedForProduct(
-          productId,
-          props.authToken
-        );
+        const notifiedForProduct = await isUserNotifiedForProduct(productId);
         setUserNotifiedForProduct(notifiedForProduct);
       } catch {
         setUserNotifiedForProduct(false);
@@ -184,13 +177,14 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
       flex flex-col rounded-2xl px-2 py-4 lg:p-4"
           >
             <ProductDetails
-              productId={productId === undefined ? -1 : Number(productId)}
+              productId={Number(productId)}
               name={productName}
               synopsis={synopsis}
               image={productImage}
               prices={productPrices}
               userNotifiedForProduct={userNotifiedForProduct}
               setUserNotifiedForProduct={setUserNotifiedForProduct}
+              authToken={props.authToken}
             />
           </div>
           {productPrices.length > 1 ? (
