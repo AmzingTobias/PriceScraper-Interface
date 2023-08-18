@@ -249,3 +249,30 @@ export const updateUserEmail = (
     );
   });
 };
+
+export type TUserDetails = {
+  Username: string;
+};
+
+/**
+ * Get the user's details from the database
+ * @param user_Id The Id of the user to get
+ * @returns A promise containing user details or null, rejects on database errors
+ */
+export const getUserDetails = (
+  user_Id: string | number
+): Promise<TUserDetails> => {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT Username FROM Users WHERE Id = ?", user_Id, (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        if (row === undefined) {
+          reject(null);
+        } else {
+          resolve(row as TUserDetails);
+        }
+      }
+    });
+  });
+};
