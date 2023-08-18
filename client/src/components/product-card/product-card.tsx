@@ -1,4 +1,3 @@
-import "./product-card.css";
 import product_card_missing from "../../assets/product_card_missing.png";
 import { useNavigate } from "react-router-dom";
 
@@ -23,8 +22,12 @@ const ProductCard: React.FC<IProductCardProps> = ({ product_info }) => {
     product_info.image_link = product_card_missing;
   }
   return (
-    <div className="product-card">
+    <div className="w-60 block">
       <img
+        className="cursor-pointer
+      hover:scale-105 duration-200 transition
+      shadow-xl
+      shadow-gray-800"
         width={320}
         height={480}
         style={{ width: 245, height: 340 }}
@@ -36,8 +39,14 @@ const ProductCard: React.FC<IProductCardProps> = ({ product_info }) => {
             : product_info.name + " cover art"
         }
       />
-      <div className="product-name">
-        <h3 onClick={goToProductPage}>{product_info.name}</h3>
+      <div className="py-1 my-3 flex items-center bg-neutral-800 bg-opacity-70">
+        <h3
+          className="m-3 text-neutral-200 cursor-pointer text-lg
+          hover:underline hover:decoration-2"
+          onClick={goToProductPage}
+        >
+          {product_info.name}
+        </h3>
       </div>
     </div>
   );
