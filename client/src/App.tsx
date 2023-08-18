@@ -8,6 +8,7 @@ import { useCookies } from "react-cookie";
 import ProductPage from "./pages/product/product";
 import { Chart, registerables } from "chart.js";
 import jwtDecode from "jwt-decode";
+import SettingsPage from "./pages/settings/settings";
 
 function validateAuthToken(authToken: string) {
   try {
@@ -74,6 +75,15 @@ export default function App() {
           <Route
             path="/product/:productId"
             Component={() => ProductPage({ authToken: userAuthToken })}
+          />
+          <Route
+            path="/settings"
+            Component={() =>
+              SettingsPage({
+                authToken: userAuthToken,
+                setUserAuthToken: setUserAuthToken,
+              })
+            }
           />
         </Routes>
       </div>

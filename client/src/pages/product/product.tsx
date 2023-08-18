@@ -173,7 +173,7 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
               mt-8"
         >
           <div
-            className="product-details-box text-neutral-200 bg-gray-800 
+            className="text-neutral-200 bg-gray-800 
       flex flex-col rounded-2xl px-2 py-4 lg:p-4"
           >
             <ProductDetails
