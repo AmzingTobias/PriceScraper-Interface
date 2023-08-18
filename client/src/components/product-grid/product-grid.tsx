@@ -1,5 +1,4 @@
 import ProductCard, { TProductCard } from "../product-card/product-card";
-import "./product-grid.css";
 
 interface IProductGridProps {
   product_info_list: TProductCard[];
@@ -7,10 +6,42 @@ interface IProductGridProps {
 
 const ProductGrid: React.FC<IProductGridProps> = ({ product_info_list }) => {
   return (
-    <div className="product-grid">
-      {product_info_list.map((item, index) => (
-        <ProductCard key={index} product_info={item} />
-      ))}
+    <div className="">
+      <div
+        className="m-10 grid auto-cols-max auto-rows-min gap-6 grid-flow-dense 
+      grid-cols-1
+      sm:grid-cols-2
+      md:grid-cols-3
+      xl:grid-cols-4
+      2xl:grid-cols-6
+        product-grid "
+      >
+        {product_info_list.map((item, index) => (
+          <div className="grid-item flex justify-center row-span-1 col-span-1">
+            <ProductCard key={index} product_info={item} />
+          </div>
+        ))}
+        {product_info_list.map((item, index) => (
+          <div className="grid-item flex justify-center row-span-1 col-span-1">
+            <ProductCard key={index} product_info={item} />
+          </div>
+        ))}
+        {product_info_list.map((item, index) => (
+          <div className="grid-item flex justify-center row-span-1 col-span-1">
+            <ProductCard key={index} product_info={item} />
+          </div>
+        ))}
+        {product_info_list.map((item, index) => (
+          <div className="grid-item flex justify-center row-span-1 col-span-1">
+            <ProductCard key={index} product_info={item} />
+          </div>
+        ))}
+        {product_info_list.map((item, index) => (
+          <div className="grid-item flex justify-center row-span-1 col-span-1">
+            <ProductCard key={index} product_info={item} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
