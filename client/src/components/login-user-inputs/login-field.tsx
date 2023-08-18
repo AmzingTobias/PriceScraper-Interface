@@ -1,5 +1,3 @@
-import "./login-field.css";
-
 export enum EFieldType {
   PASSWORD = "password",
   USERNAME = "text",
@@ -24,7 +22,13 @@ const LoginField: React.FC<ILoginFieldProps> = (props) => {
     <>
       <input
         type={String(props.type)}
-        className="login-input input"
+        className="text-2xl p-2.5 rounded-md w-full
+        bg-gray-800 text-neutral-200
+        box-border outline-none
+        border-green-500 border-solid border-4
+        hover:border-neutral-200
+        focus:border-neutral-200
+        invalid:border-red-500"
         name={props.name}
         id={props.id}
         placeholder={props.placeholder}

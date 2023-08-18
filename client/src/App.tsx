@@ -62,9 +62,9 @@ export default function App() {
   Chart.register(...registerables);
 
   return (
-    <div className="App">
+    <div className="App min-h-screen">
       <NavBar authToken={userAuthToken} />
-      <div className="">
+      <div>
         <Routes>
           <Route path="/" Component={HomePage} />
           <Route

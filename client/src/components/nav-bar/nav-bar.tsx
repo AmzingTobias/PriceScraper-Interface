@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FaBars, FaTimes } from "react-icons/fa";
 import { MdOutlineAccountCircle, MdOutlineSettings } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { IconContext } from "react-icons";

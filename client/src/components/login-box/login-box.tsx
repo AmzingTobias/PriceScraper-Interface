@@ -1,11 +1,10 @@
-import { FormEvent, ReactNode, useState } from "react";
 import "./login-box.css";
+import { FormEvent, useState } from "react";
 import LoginField, { EFieldType } from "../login-user-inputs/login-field";
 import LoginBtn from "../login-user-inputs/login-btn";
 import { useNavigate } from "react-router-dom";
 
 interface IContextBoxProps {
-  children: ReactNode;
   style?: React.CSSProperties;
   setUserAuthToken?: React.Dispatch<React.SetStateAction<string>>;
 }
@@ -43,10 +42,6 @@ const LoginBox: React.FC<IContextBoxProps> = (props) => {
   const navigate = useNavigate();
 
   const [formType, setFormType] = useState<EFormType>(EFormType.login);
-  const loginFormTypeClassNames =
-    "mode-btn btn " + (formType === EFormType.login ? "active" : "inactive");
-  const signupFormTypeClassNames =
-    "mode-btn btn " + (formType === EFormType.signup ? "active" : "inactive");
   const [loginInputs, setLoginInputs] = useState<TLoginInputs>({
     username: "",
     password: "",
@@ -126,31 +121,45 @@ const LoginBox: React.FC<IContextBoxProps> = (props) => {
   };
 
   return (
-    <div className="content-box" style={props.style}>
-      <div className="flex-container">
-        <div className="split-sides">
-          <div className="left-side">
+    <div
+      className="login-box w-full  flex justify-center items-center
+     text-neutral-200"
+      style={props.style}
+    >
+      <div className="flex flex-col w-11/12 sm:w-120 my-8 2xl:w-160 bg-gray-800 p-4 rounded-2xl">
+        <div className="flex">
+          <div className="flex-1">
             <button
-              className={loginFormTypeClassNames}
+              className={
+                "w-full h-full text-3xl p-5 font-bold rounded-tl-2xl " +
+                (formType !== EFormType.login
+                  ? "bg-gray-900"
+                  : "underline cursor-default")
+              }
               onClick={() => toggleFormType(EFormType.login)}
             >
               Login
             </button>
           </div>
-          <div className="right-side">
+          <div className="flex-1">
             <button
-              className={signupFormTypeClassNames}
+              className={
+                "w-full h-full text-3xl p-5 font-bold rounded-tr-2xl " +
+                (formType !== EFormType.signup
+                  ? "bg-gray-900"
+                  : "underline cursor-default")
+              }
               onClick={() => toggleFormType(EFormType.signup)}
             >
               Signup
             </button>
           </div>
         </div>
-        <div className="bottom-div">
+        <div>
           <form
             onSubmit={formType === EFormType.login ? loginForm : signupForm}
           >
-            <div className="input-field">
+            <div className="my-2.5">
               <LoginField
                 id="username"
                 name="username"
@@ -159,7 +168,7 @@ const LoginBox: React.FC<IContextBoxProps> = (props) => {
                 onChange={(event) => handleInputChange("username", event)}
               />
             </div>
-            <div className="input-field">
+            <div className="my-2.5">
               <LoginField
                 id="password"
                 name="password"
@@ -168,18 +177,11 @@ const LoginBox: React.FC<IContextBoxProps> = (props) => {
                 onChange={(event) => handleInputChange("password", event)}
               />
             </div>
-            <div
-              className={
-                warningMessage === " "
-                  ? "warning-message omit"
-                  : "warning-message"
-              }
-            >
-              <p>{warningMessage}</p>
-            </div>
-            <div className="form-btn">
+            <p className="text-red-500 text-base font-medium italic">
+              {warningMessage}
+            </p>
+            <div className="mt-2.5">
               <LoginBtn
-                className="login-btn"
                 text={formType === EFormType.login ? "Login" : "Signup"}
                 type={"submit"}
               />
@@ -187,7 +189,6 @@ const LoginBox: React.FC<IContextBoxProps> = (props) => {
           </form>
         </div>
       </div>
-      {props.children}
     </div>
   );
 };

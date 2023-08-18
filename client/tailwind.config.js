@@ -9,6 +9,10 @@ module.exports = {
       boxShadow: {
         fillInsideRoundedFull: "inset 0 0 0 9999px",
       },
+      width: {
+        160: "40rem",
+        120: "30rem",
+      },
     },
   },
   plugins: [],

@@ -6,11 +6,9 @@ interface ILoginPageProps {
 
 const LoginPage: React.FC<ILoginPageProps> = (props) => {
   return (
-    <div>
-      <LoginBox setUserAuthToken={props.setUserAuthToken}>
-        <></>
-      </LoginBox>
-    </div>
+    <>
+      <LoginBox setUserAuthToken={props.setUserAuthToken} />
+    </>
   );
 };
 
