@@ -5,8 +5,25 @@ import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/home/home";
 import LoginPage from "./pages/login/login";
 import { useCookies } from "react-cookie";
+import ProductPage from "./pages/product/product";
+import { Chart, registerables } from "chart.js";
+import jwtDecode from "jwt-decode";
 
-function useStateAuthCookie(initialValue: any): [any, React.Dispatch<any>] {
+function validateAuthToken(authToken: string) {
+  try {
+    const decodedToken: any = jwtDecode(authToken);
+    if (decodedToken.exp < Date.now() / 1000) {
+      // Token expired
+      return false;
+    } else {
+      return true;
+    }
+  } catch (_err) {
+    return false;
+  }
+}
+
+function useStateAuthCookie(): [any, React.Dispatch<any>] {
   const AUTH_TOKEN_NAME = "auth-token";
   const [cookies, setCookie] = useCookies([AUTH_TOKEN_NAME]);
   const initialCookieValue: string | undefined = cookies[AUTH_TOKEN_NAME];
@@ -20,24 +37,43 @@ function useStateAuthCookie(initialValue: any): [any, React.Dispatch<any>] {
         sameSite: "lax",
         secure: true,
         maxAge: 7 * 24 * 60 * 60,
+        path: "/",
       }); // Expires in 7 days
+      if (state !== "") {
+        const authTokenValid = validateAuthToken(state);
+        if (authTokenValid === false) {
+          setState("");
+        }
+      }
     }
   }, [state, cookies, setCookie]);
+  if (state !== "") {
+    const authTokenValid = validateAuthToken(state);
+    if (authTokenValid === false) {
+      setState("");
+    }
+  }
   return [state, setState];
 }
 
 export default function App() {
-  const [userAuthToken, setUserAuthToken] = useStateAuthCookie("");
+  const [userAuthToken, setUserAuthToken] = useStateAuthCookie();
+
+  Chart.register(...registerables);
 
   return (
     <div className="App">
       <NavBar authToken={userAuthToken} />
-      <div className="container">
+      <div className="">
         <Routes>
           <Route path="/" Component={HomePage} />
           <Route
             path="/login"
             Component={() => LoginPage({ setUserAuthToken: setUserAuthToken })}
+          />
+          <Route
+            path="/product/:productId"
+            Component={() => ProductPage({ authToken: userAuthToken })}
           />
         </Routes>
       </div>

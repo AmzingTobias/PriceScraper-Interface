@@ -1,7 +1,7 @@
 import sqlite3 from "sqlite3";
 import { getDatabase } from "../data/database";
 
-type tImageEntry = {
+export type tImageEntry = {
   Id: number;
   Link: string;
 };

@@ -17,7 +17,7 @@ const HomePage = () => {
         const data: tProductEntry[] = await response.json();
         const productDataPromises = data.map(async (product) => {
           const imageResponse = await fetch(
-            `/api/images/product?ProductId=${product.Id}`
+            `/api/images/product/${product.Id}`
           );
           const imageData = await imageResponse.json();
           return {

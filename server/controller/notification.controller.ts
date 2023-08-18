@@ -15,6 +15,7 @@ import {
   deleteDiscordWebhook,
   getDiscordWebhookWithUserId,
   getUserNotificationSettingsWithId,
+  isUserBeingNotifiedForProduct,
   linkUserToProductForNotification,
   unlinkUserFromProductNotification,
   updateDiscordWebhook,
@@ -288,5 +289,33 @@ export const update_discord_webhook = async (req: Request, res: Response) => {
     }
   } else {
     res.status(BAD_REQUEST_CODE).send("Missing webhook");
+  }
+};
+
+/**
+ * Check if a user is being notified for a product
+ * @param req The request object. Should have a productId in the params
+ * @param res The response object
+ */
+export const is_user_notified_for_product = async (
+  req: Request,
+  res: Response
+) => {
+  if (req.user !== undefined) {
+    const { productId } = req.params;
+    if (productId !== undefined) {
+      isUserBeingNotifiedForProduct(req.user.Id, productId)
+        .then((notified) => {
+          res.json(notified);
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+        });
+    } else {
+      res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
+    }
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   }
 };

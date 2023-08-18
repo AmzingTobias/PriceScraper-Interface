@@ -72,7 +72,7 @@ const LoginBox: React.FC<IContextBoxProps> = (props) => {
           props.setUserAuthToken &&
           typeof loginResponseJson.token === "string"
         ) {
-          props.setUserAuthToken(loginResponseJson.token);
+          props.setUserAuthToken(`JWT ${loginResponseJson.token}`);
           navigate("/", { replace: false });
         }
       } else {

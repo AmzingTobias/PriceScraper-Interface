@@ -2,7 +2,7 @@ import { getDatabase } from "../data/database";
 
 const db = getDatabase();
 
-type tPriceEntry = {
+export type tPriceEntry = {
   Price: number;
   Date: string;
   Site_link: string;

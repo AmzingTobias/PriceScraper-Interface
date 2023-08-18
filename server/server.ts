@@ -8,6 +8,7 @@ import { notificationRouter } from "./routes/notification.routes";
 import { imageRouter } from "./routes/image.routes";
 import { userRouter } from "./routes/user.routes";
 import { tUserAccount } from "./common/user";
+import cookieParser from "cookie-parser";
 
 declare global {
   namespace Express {
@@ -24,6 +25,7 @@ const port: number = 5000;
 // const pythonScraper = "../../../Python/PriceScraper/main.py";
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.use("/api/products", productRouter);
 app.use("/api/prices", priceRouter);

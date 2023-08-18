@@ -14,9 +14,31 @@ import {
   createProduct,
   deleteProduct,
   getAllProducts,
+  getProductWithId,
   renameProductWithId,
 } from "../models/product.models";
 import { isUserAdmin } from "../models/user.models";
+
+/**
+ * Get a single product from the database
+ * @param req The request object. Should contain a product Id in it's params
+ * @param res The response object
+ */
+export const get_product = async (req: Request, res: Response) => {
+  const { productId } = req.params;
+  getProductWithId(productId)
+    .then((product) => {
+      if (product === null) {
+        res.status(BAD_REQUEST_CODE).json(null);
+      } else {
+        res.json(product);
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+    });
+};
 
 /**
  * Gets all the products found in the database
@@ -60,29 +82,6 @@ export const add_product = async (req: Request, res: Response) => {
           .catch((err) => {
             res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
           });
-        // db.run(
-        //   `INSERT INTO Products (Name) VALUES (?)`,
-        //   product_name,
-        //   function (err) {
-        //     if (err) {
-        //       const errorWithNumber = err as { errno?: number };
-        //       if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
-        //         res
-        //           .status(BAD_REQUEST_CODE)
-        //           .send(`${product_name} already exists`);
-        //       } else {
-        //         console.error(err);
-        //         res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-        //       }
-        //     } else {
-        //       if (this.changes > 0) {
-        //         res.send(`${product_name} added`);
-        //       } else {
-        //         res.status(BAD_REQUEST_CODE).send("Could not add product");
-        //       }
-        //     }
-        //   }
-        // );
       } else {
         res.status(BAD_REQUEST_CODE).send(PRODUCT_NAME_INVALID_MSG);
       }

@@ -1,5 +1,6 @@
 import "./product-card.css";
 import product_card_missing from "../../assets/product_card_missing.png";
+import { useNavigate } from "react-router-dom";
 
 export type TProductCard = {
   id: number;
@@ -12,14 +13,22 @@ interface IProductCardProps {
 }
 
 const ProductCard: React.FC<IProductCardProps> = ({ product_info }) => {
+  const navigate = useNavigate();
+
+  const goToProductPage = () => {
+    navigate(`/product/${product_info.id}`, { replace: false });
+  };
+
   if (product_info.image_link === null) {
     product_info.image_link = product_card_missing;
   }
   return (
     <div className="product-card">
       <img
-        width={245}
-        height={340}
+        width={320}
+        height={480}
+        style={{ width: 245, height: 340 }}
+        onClick={goToProductPage}
         src={product_info.image_link}
         alt={
           product_info.image_link === product_card_missing
@@ -28,7 +37,7 @@ const ProductCard: React.FC<IProductCardProps> = ({ product_info }) => {
         }
       />
       <div className="product-name">
-        <h3>{product_info.name}</h3>
+        <h3 onClick={goToProductPage}>{product_info.name}</h3>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import {
   get_all_products,
   rename_product,
   delete_product,
+  get_product,
 } from "../controller/product.controllers";
 import { verify_token } from "../common/security";
 
@@ -15,6 +16,9 @@ productRouter.get("/", get_all_products);
 
 // Used for creating a new product, should have a unique name supplied
 productRouter.post("/", verify_token, add_product);
+
+// Get a single product
+productRouter.get("/:productId", get_product);
 
 // Used for renaming a product, with a new unique name
 productRouter.patch("/:id", verify_token, rename_product);
