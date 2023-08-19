@@ -9,6 +9,7 @@ import ProductPage from "./pages/product/product";
 import { Chart, registerables } from "chart.js";
 import jwtDecode from "jwt-decode";
 import SettingsPage from "./pages/settings/settings";
+import AdminPopup from "./components/admin/admin-popup";
 
 function validateAuthToken(authToken: string) {
   try {
@@ -24,7 +25,7 @@ function validateAuthToken(authToken: string) {
   }
 }
 
-function useStateAuthCookie(): [any, React.Dispatch<any>] {
+function useStateAuthCookie(): [string, React.Dispatch<any>] {
   const AUTH_TOKEN_NAME = "auth-token";
   const [cookies, setCookie] = useCookies([AUTH_TOKEN_NAME]);
   const initialCookieValue: string | undefined = cookies[AUTH_TOKEN_NAME];
@@ -86,6 +87,7 @@ export default function App() {
             }
           />
         </Routes>
+        <AdminPopup userAuthToken={userAuthToken} />
       </div>
     </div>
   );
