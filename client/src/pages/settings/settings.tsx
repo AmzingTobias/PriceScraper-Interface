@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { TUserDetails } from "../../../../server/models/user.models";
 import LogoutBtn from "../../components/settings/logout-btn";
 import NotificationSettings from "../../components/settings/notification-settings";
+import NotificationTabs, {
+  ENotificationTabs,
+} from "../../components/settings/notification-tabs";
 
 interface ISettingsPageProps {
   setUserAuthToken: React.Dispatch<React.SetStateAction<string>>;
@@ -38,6 +41,15 @@ const SettingsPage: React.FC<ISettingsPageProps> = ({
     fetchUserDetails();
   }, []);
 
+  const [activeNotificationTab, setActiveNotificationTab] = useState(
+    ENotificationTabs.Discord
+  );
+
+  const notificationTabs: ENotificationTabs[] = [
+    ENotificationTabs.Discord,
+    ENotificationTabs.Email,
+  ];
+
   return (
     <>
       <div className="flex flex-col items-center">
@@ -67,6 +79,13 @@ const SettingsPage: React.FC<ISettingsPageProps> = ({
               <NotificationSettings />
             </div>
             <hr className="my-4" />
+            <div>
+              <NotificationTabs
+                notificationTabs={notificationTabs}
+                activeTab={activeNotificationTab}
+                setActiveTab={setActiveNotificationTab}
+              />
+            </div>
           </div>
         </div>
       </div>
