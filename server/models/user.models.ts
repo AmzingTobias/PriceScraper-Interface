@@ -3,6 +3,7 @@ import { tUserAccount, is_email_valid } from "../common/user";
 import { get_today_date_as_string } from "../common/date";
 import sqlite3 from "sqlite3";
 import { resolve } from "path";
+import { createNotificationSettingsForUser } from "./notification.models";
 
 const db = getDatabase();
 
@@ -97,26 +98,34 @@ export const createUser = (
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const todays_date = get_today_date_as_string();
-    db.run(
-      "INSERT INTO Users (Username, Password, Date_created) VALUES (?, ?, ?)",
-      [username, hashed_password, todays_date],
-      function (err) {
-        if (err) {
-          const errorWithNumber = err as { errno?: number };
-          if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
-            resolve(false);
+    db.serialize(() => {
+      db.run(
+        "INSERT INTO Users (Username, Password, Date_created) VALUES (?, ?, ?)",
+        [username, hashed_password, todays_date],
+        function (err) {
+          if (err) {
+            const errorWithNumber = err as { errno?: number };
+            if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
+              resolve(false);
+            } else {
+              reject(err);
+            }
           } else {
-            reject(err);
-          }
-        } else {
-          if (this.changes > 0) {
-            resolve(true);
-          } else {
-            reject("Database error");
+            if (this.changes > 0) {
+              createNotificationSettingsForUser(this.lastID)
+                .then((notificationsCreated) => {
+                  resolve(notificationsCreated);
+                })
+                .catch((err) => {
+                  reject(err);
+                });
+            } else {
+              reject("Database error");
+            }
           }
         }
-      }
-    );
+      );
+    });
   });
 };
 
@@ -247,5 +256,32 @@ export const updateUserEmail = (
         }
       }
     );
+  });
+};
+
+export type TUserDetails = {
+  Username: string;
+};
+
+/**
+ * Get the user's details from the database
+ * @param user_Id The Id of the user to get
+ * @returns A promise containing user details or null, rejects on database errors
+ */
+export const getUserDetails = (
+  user_Id: string | number
+): Promise<TUserDetails> => {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT Username FROM Users WHERE Id = ?", user_Id, (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        if (row === undefined) {
+          reject(null);
+        } else {
+          resolve(row as TUserDetails);
+        }
+      }
+    });
   });
 };

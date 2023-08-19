@@ -10,6 +10,7 @@ import {
   addEmailForUser,
   createUser,
   getEmailForUserWithId,
+  getUserDetails,
   getUserWithUsername,
   isUserAdmin,
   updateUserEmail,
@@ -229,5 +230,29 @@ export const update_email = async (req: Request, res: Response) => {
     }
   } else {
     res.status(BAD_REQUEST_CODE).send("Missing email");
+  }
+};
+
+/**
+ * Get the user details
+ * @param req The request object
+ * @param res The response object
+ */
+export const get_user_details = (req: Request, res: Response) => {
+  if (req.user !== undefined) {
+    getUserDetails(req.user.Id)
+      .then((userDetails) => {
+        if (userDetails === null) {
+          res.status(BAD_REQUEST_CODE).json(null);
+        } else {
+          res.json(userDetails);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      });
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   }
 };

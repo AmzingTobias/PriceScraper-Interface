@@ -3,6 +3,7 @@ import {
   add_email,
   create_account,
   get_email,
+  get_user_details,
   is_account_admin,
   login,
   update_email,
@@ -32,3 +33,6 @@ userRouter.patch("/email", verify_token, update_email);
 
 // Add an email to an account
 userRouter.post("/email", verify_token, add_email);
+
+// Get the user details for a user
+userRouter.get("/", verify_token, get_user_details);
