@@ -1,6 +1,5 @@
 export enum ENotificationTabs {
   Discord = "Discord",
-  Email = "Email",
 }
 
 interface INotificationTabsProps {

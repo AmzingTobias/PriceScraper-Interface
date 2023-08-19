@@ -5,6 +5,7 @@ import NotificationSettings from "../../components/settings/notification-setting
 import NotificationTabs, {
   ENotificationTabs,
 } from "../../components/settings/notification-tabs";
+import DiscordSettings from "../../components/settings/discord-settings";
 
 interface ISettingsPageProps {
   setUserAuthToken: React.Dispatch<React.SetStateAction<string>>;
@@ -45,10 +46,7 @@ const SettingsPage: React.FC<ISettingsPageProps> = ({
     ENotificationTabs.Discord
   );
 
-  const notificationTabs: ENotificationTabs[] = [
-    ENotificationTabs.Discord,
-    ENotificationTabs.Email,
-  ];
+  const notificationTabs: ENotificationTabs[] = [ENotificationTabs.Discord];
 
   return (
     <>
@@ -85,6 +83,11 @@ const SettingsPage: React.FC<ISettingsPageProps> = ({
                 activeTab={activeNotificationTab}
                 setActiveTab={setActiveNotificationTab}
               />
+            </div>
+            <div>
+              {activeNotificationTab === ENotificationTabs.Discord ? (
+                <DiscordSettings />
+              ) : null}
             </div>
           </div>
         </div>

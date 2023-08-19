@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import { MdOutlineAccountCircle, MdOutlineSettings } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { IconContext } from "react-icons";
