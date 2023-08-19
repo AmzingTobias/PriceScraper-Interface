@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { TUserDetails } from "../../../../server/models/user.models";
 import LogoutBtn from "../../components/settings/logout-btn";
+import NotificationSettings from "../../components/settings/notification-settings";
 
 interface ISettingsPageProps {
   setUserAuthToken: React.Dispatch<React.SetStateAction<string>>;
@@ -63,8 +64,9 @@ const SettingsPage: React.FC<ISettingsPageProps> = ({
             </div>
             <hr className="my-4" />
             <div>
-              <h1>Notification settings</h1>
+              <NotificationSettings />
             </div>
+            <hr className="my-4" />
           </div>
         </div>
       </div>

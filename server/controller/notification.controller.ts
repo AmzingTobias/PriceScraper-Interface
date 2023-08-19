@@ -66,8 +66,7 @@ export const update_notifications_settings = async (
   res: Response
 ) => {
   const enable_notifications = req.body["Enable"];
-  const enable_no_price_change_notifications =
-    req.body["No price change notifications"];
+  const enable_no_price_change_notifications = req.body["NoPriceChangeEnable"];
   if (
     typeof enable_notifications === "boolean" &&
     typeof enable_no_price_change_notifications === "boolean"
