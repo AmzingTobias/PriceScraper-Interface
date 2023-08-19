@@ -61,7 +61,7 @@ export const get_notification_setting_for_user = async (
  * should be received, if there is no price change detected for products
  * @param res The response object
  */
-export const set_notifications_settings = async (
+export const update_notifications_settings = async (
   req: Request,
   res: Response
 ) => {
@@ -82,7 +82,7 @@ export const set_notifications_settings = async (
           if (settings_updated) {
             res.send("Settings updated for user");
           } else {
-            res.send("User doesn't exist");
+            res.status(BAD_REQUEST_CODE).send("User doesn't exist");
           }
         })
         .catch((err) => {

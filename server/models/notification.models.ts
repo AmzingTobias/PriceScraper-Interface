@@ -72,6 +72,36 @@ export const updateNotificationSettingsWithUserId = (
 };
 
 /**
+ * Create the notification settings for a user
+ * @param user_id The Id of the user to create the notification settings for
+ * @param notification_settings The new settings for the notifications to create with
+ * @returns A promise boolean, true if the notification settings are created., false if the user
+ * doesn't exist. Rejects on database errors
+ */
+export const createNotificationSettingsForUser = (
+  user_id: number
+): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      "INSERT INTO Notifications (User_Id, Enabled, No_price_change_enabled) VALUES (?, ?, ?)",
+      [user_id, 1, 0],
+      function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          if (this.changes > 0) {
+            resolve(true);
+          } else {
+            // User does not exist
+            resolve(false);
+          }
+        }
+      }
+    );
+  });
+};
+
+/**
  * Link a user to a product notification
  * @param user_id The Id of the user to link the notification for
  * @param product_id The Id of the product the user want to receive notifications for
