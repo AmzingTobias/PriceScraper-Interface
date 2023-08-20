@@ -41,6 +41,7 @@ const AdminPopup: React.FC<IAdminPopupProps> = ({ userAuthToken }) => {
   const navigate = useNavigate();
 
   const handleAdminPopupClick = (navLink: string) => {
+    setPopupOpen(false);
     navigate(navLink, { replace: false });
   };
 

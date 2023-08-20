@@ -10,6 +10,7 @@ import { Chart, registerables } from "chart.js";
 import jwtDecode from "jwt-decode";
 import SettingsPage from "./pages/settings/settings";
 import AdminPopup from "./components/admin/admin-popup";
+import ImageUploadPage from "./pages/image/image-upload";
 
 function validateAuthToken(authToken: string) {
   try {
@@ -86,6 +87,7 @@ export default function App() {
               })
             }
           />
+          <Route path="/admin/images/new" Component={ImageUploadPage} />
         </Routes>
         <AdminPopup userAuthToken={userAuthToken} />
       </div>
