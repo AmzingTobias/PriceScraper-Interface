@@ -1,4 +1,3 @@
-import { FormEvent, useRef, useState } from "react";
 import ImageUploadForm from "../../components/image/image-upload-form";
 
 const ImageUploadPage = () => {

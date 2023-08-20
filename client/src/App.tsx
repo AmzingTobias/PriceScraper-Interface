@@ -11,6 +11,7 @@ import jwtDecode from "jwt-decode";
 import SettingsPage from "./pages/settings/settings";
 import AdminPopup from "./components/admin/admin-popup";
 import ImageUploadPage from "./pages/image/image-upload";
+import NewProductPage from "./pages/product/new-product";
 
 function validateAuthToken(authToken: string) {
   try {
@@ -88,6 +89,7 @@ export default function App() {
             }
           />
           <Route path="/admin/images/new" Component={ImageUploadPage} />
+          <Route path="/admin/products/new" Component={NewProductPage} />
         </Routes>
         <AdminPopup userAuthToken={userAuthToken} />
       </div>
