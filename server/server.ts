@@ -9,6 +9,7 @@ import { imageRouter } from "./routes/image.routes";
 import { userRouter } from "./routes/user.routes";
 import { tUserAccount } from "./common/user";
 import cookieParser from "cookie-parser";
+import path from "path";
 
 declare global {
   namespace Express {
@@ -20,6 +21,8 @@ declare global {
 
 const app: Express = express();
 const port: number = 5000;
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // const { spawn } = require("child_process");
 // const pythonScraper = "../../../Python/PriceScraper/main.py";

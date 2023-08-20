@@ -7,15 +7,25 @@ import {
   remove_image_from_product,
   set_image_for_product,
 } from "../controller/image.controller";
-import { verify_token } from "../common/security";
+import { verify_token, verify_token_is_admin } from "../common/security";
 
 export const imageRouter = Router();
+
+import multer from "multer";
+import path from "path";
+const upload = multer({ dest: path.join(__dirname, "..\\uploads") });
 
 // Get all images from the database
 imageRouter.get("/", verify_token, get_all_images);
 
 // Add a new image to the database
-imageRouter.post("/", verify_token, add_image);
+imageRouter.post(
+  "/",
+  verify_token,
+  verify_token_is_admin,
+  upload.single("image"),
+  add_image
+);
 
 // Get an image for a given product
 imageRouter.get("/product/:productId", get_image_for_product);

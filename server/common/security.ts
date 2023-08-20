@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
 import { tUserAccount } from "./user";
-import { getUserWithId } from "../models/user.models";
+import { getUserWithId, isUserAdmin } from "../models/user.models";
 
 export const hashPassword = async (raw_password: string): Promise<string> => {
   const saltRounds = Number(process.env.PASSWORD_SALT_ROUNDS);
@@ -43,5 +43,22 @@ export const verify_token = (
   } else {
     req.user = undefined;
     return res.status(401).send("No token provided");
+  }
+};
+
+export const verify_token_is_admin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (req.user !== undefined) {
+    const isAdmin = await isUserAdmin(req.user.Id);
+    if (isAdmin) {
+      next();
+    } else {
+      res.status(401).send("Unauthorized");
+    }
+  } else {
+    res.status(401).send("Unauthorized");
   }
 };
