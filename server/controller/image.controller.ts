@@ -23,17 +23,13 @@ import { isUserAdmin } from "../models/user.models";
  */
 export const add_image = async (req: Request, res: Response) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
-    const image_url = req.body["Image"];
-    if (typeof image_url === "string") {
-      const image_url_trimmed = image_url.trim();
-      addImage(image_url_trimmed)
+    if (req.file !== undefined) {
+      addImage(`/uploads/${req.file?.filename}`)
         .then((image_added) => {
           if (image_added) {
-            res.send(`Image: ${image_url_trimmed} added`);
+            res.send(`Image added`);
           } else {
-            res
-              .status(BAD_REQUEST_CODE)
-              .send(`Image: ${image_url_trimmed} already exists`);
+            res.status(BAD_REQUEST_CODE).send(`Image already exists`);
           }
         })
         .catch((err) => {
