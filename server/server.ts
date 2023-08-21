@@ -10,6 +10,8 @@ import { userRouter } from "./routes/user.routes";
 import { tUserAccount } from "./common/user";
 import cookieParser from "cookie-parser";
 import path from "path";
+import { getScraperConnection } from "./common/scraper";
+import { scraperRouter } from "./routes/scraper.routes";
 
 declare global {
   namespace Express {
@@ -18,6 +20,9 @@ declare global {
     }
   }
 }
+
+// Will start the price scraper
+getScraperConnection();
 
 const app: Express = express();
 const port: number = 5000;
@@ -36,23 +41,7 @@ app.use("/api/sites", siteRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/images", imageRouter);
 app.use("/api/users", userRouter);
-
-// const pythonProcess = spawn(
-//   "C:/Users/Tobias/Documents/Coding/Python/PriceScraper/env/Scripts/python",
-//   [pythonScraper]
-// );
-
-// pythonProcess.stdout.on("data", (data) => {
-//   console.log(`Python script output: ${data}`);
-// });
-
-// pythonProcess.stderr.on("data", (data) => {
-//   console.error(`Python script error: ${data}`);
-// });
-
-// pythonProcess.on("close", (code) => {
-//   console.log(`Python script exited with code ${code}`);
-// });
+app.use("/api/scraper", scraperRouter);
 
 // If no router was found for the request
 app.use((_req, res, _next) => {
