@@ -266,9 +266,7 @@ export const update_discord_webhook = async (req: Request, res: Response) => {
   const discord_webhook = req.body["Webhook"];
   if (typeof discord_webhook === "string") {
     if (req.user !== undefined) {
-      const discord_webhook_trimmed = (discord_webhook as string)
-        .trim()
-        .toLowerCase();
+      const discord_webhook_trimmed = (discord_webhook as string).trim();
       updateDiscordWebhook(req.user.Id, discord_webhook_trimmed)
         .then((webhook_updated) => {
           if (webhook_updated) {
