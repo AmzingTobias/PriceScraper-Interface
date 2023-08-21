@@ -60,10 +60,12 @@ export const getAllProducts = (): Promise<tProductEntry[]> => {
 /**
  * Create a new product in the database
  * @param product_name The product name for the new product
- * @returns A boolean promise. True if the product is created, false
- * if the product already exists. Rejects on database errors
+ * @returns A boolean and number promise. True if the product is created, false
+ * if the product already exists. The number represents the Id of the newly created product Rejects on database errors
  */
-export const createProduct = (product_name: string): Promise<boolean> => {
+export const createProduct = (
+  product_name: string
+): Promise<[boolean, number]> => {
   return new Promise((resolve, reject) => {
     db.run(
       "INSERT INTO Products (Name) VALUES (?)",
@@ -72,13 +74,13 @@ export const createProduct = (product_name: string): Promise<boolean> => {
         if (err) {
           const errorWithNumber = err as { errno?: number };
           if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
-            resolve(false);
+            resolve([false, this.lastID]);
           } else {
             reject(err);
           }
         } else {
           if (this.changes > 0) {
-            resolve(true);
+            resolve([true, this.lastID]);
           } else {
             reject("Couldn't create product");
           }

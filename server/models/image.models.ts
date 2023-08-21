@@ -11,11 +11,11 @@ const db = getDatabase();
 /**
  * Add an image to the database
  * @param image_url The image url to add to the database
- * @returns A promise boolean, resolves with true if the image is added to
- * the database, false if the image url is already in the database. Rejects on
- * database errors
+ * @returns A promise boolean, number, resolves with true if the image is added to
+ * the database, false if the image url is already in the database. The number is the Id of the
+ * image created. Rejects on database errors
  */
-export const addImage = (image_url: string): Promise<boolean> => {
+export const addImage = (image_url: string): Promise<[boolean, number]> => {
   return new Promise((resolve, reject) => {
     db.run(
       "INSERT INTO Images (Image_link) VALUES (?)",
@@ -24,13 +24,13 @@ export const addImage = (image_url: string): Promise<boolean> => {
         if (err) {
           const errorWithNumber = err as { errno?: number };
           if (errorWithNumber.errno === sqlite3.CONSTRAINT) {
-            resolve(false);
+            resolve([false, this.lastID]);
           } else {
             reject(err);
           }
         } else {
           if (this.changes > 0) {
-            resolve(true);
+            resolve([true, this.lastID]);
           } else {
             reject("Could not add image to database");
           }
