@@ -26,7 +26,7 @@ export const add_image = async (req: Request, res: Response) => {
     if (req.file !== undefined) {
       addImage(`/uploads/${req.file?.filename}`)
         .then((image_added) => {
-          if (image_added) {
+          if (image_added[0]) {
             res.send(`Image added`);
           } else {
             res.status(BAD_REQUEST_CODE).send(`Image already exists`);

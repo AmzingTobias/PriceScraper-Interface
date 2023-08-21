@@ -18,6 +18,8 @@ import {
   renameProductWithId,
 } from "../models/product.models";
 import { isUserAdmin } from "../models/user.models";
+import { createSite } from "../models/site.models";
+import { addImage, linkProductToImage } from "../models/image.models";
 
 /**
  * Get a single product from the database
@@ -71,7 +73,7 @@ export const add_product = async (req: Request, res: Response) => {
       if (product_name_valid) {
         createProduct(product_name)
           .then((product_created) => {
-            if (product_created) {
+            if (product_created[0]) {
               res.send(`Product: ${product_name} created`);
             } else {
               res
@@ -87,6 +89,65 @@ export const add_product = async (req: Request, res: Response) => {
       }
     } else {
       res.status(BAD_REQUEST_CODE).send(PRODUCT_NAME_MISSING_MSG);
+    }
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+  }
+};
+
+/**
+ * Create a product, with possible sites and images being included
+ * @param req The request object. It should contain a product name and description at most, with possible site(s) and a possible image
+ * @param res The response object
+ */
+export const add_product_full = async (req: Request, res: Response) => {
+  // Check authentication
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    const product_name: string | undefined = req.body.Name;
+    const product_description: string | undefined = req.body.Description;
+    const product_sites: undefined | string | string[] = req.body.Sites;
+
+    if (product_name !== undefined && product_description !== undefined) {
+      const product_created = await createProduct(product_name);
+      let sites_created = true;
+      let image_linked = true;
+      if (product_created[0]) {
+        if (product_sites !== undefined) {
+          if (typeof product_sites === "string") {
+            sites_created =
+              (await createSite(product_sites, product_created[1])) === false
+                ? false
+                : sites_created;
+          } else {
+            for (const site of product_sites) {
+              sites_created =
+                (await createSite(site, product_created[1])) === false
+                  ? false
+                  : sites_created;
+            }
+          }
+        }
+
+        if (req.file !== undefined) {
+          const image_created = await addImage(`/uploads/${req.file.filename}`);
+          if (image_created[0]) {
+            image_linked = await linkProductToImage(
+              image_created[1],
+              product_created[1]
+            );
+          }
+        }
+
+        if (product_created[0] && image_linked && sites_created) {
+          res.status(200).send("Product created");
+        } else {
+          res.send(
+            `Created with errors: Product created: ${product_created[0]}, Sites created: ${sites_created}, Image created: ${image_linked}`
+          );
+        }
+      }
+    } else {
+      res.status(BAD_REQUEST_CODE).send("Missing product details");
     }
   } else {
     res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
