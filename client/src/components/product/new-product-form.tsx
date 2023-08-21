@@ -9,9 +9,37 @@ const NewProductForm = () => {
   const [imageData, setImageData] = useState<File>();
   const [newSite, setNewSite] = useState<string>("");
   const [siteLinks, setSiteLinks] = useState<string[]>([]);
+  const [warningMessage, setWarningMessage] = useState<string>("");
 
-  const handleFormSubmit = (e: FormEvent) => {
+  const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    const formData = new FormData();
+    if (imageData !== undefined) {
+      formData.append("Image", imageData);
+    }
+    formData.append("Name", productName);
+    formData.append("Description", productDesc);
+    siteLinks.forEach((site) => {
+      formData.append("Sites", site);
+    });
+    const productCreateResponse = await fetch("/api/products/create", {
+      body: formData,
+      method: "POST",
+    });
+
+    if (productCreateResponse.ok) {
+      const productResponseText = await productCreateResponse.text();
+      alert(productResponseText);
+      // Clear form data
+      setProductName("");
+      setProductDesc("");
+      setProductImageUrl("");
+      setImageData(undefined);
+      setNewSite("");
+      setSiteLinks([]);
+    } else {
+      setWarningMessage("Error occured in request for creating product");
+    }
   };
 
   useEffect(() => {
@@ -93,7 +121,7 @@ const NewProductForm = () => {
                 <img
                   className="my-4 sm:mt-0 sm:mb-2"
                   src={productImageUrl}
-                  alt="Uploaded image"
+                  alt="Upload preview"
                   width={240}
                   height={360}
                 />
@@ -174,6 +202,9 @@ const NewProductForm = () => {
           </div>
           <hr className="mb-4 mt-6" />
           <div>
+            <p className="text-red-500 text-base font-medium italic animate-pulse text-center mb-4">
+              {warningMessage}
+            </p>
             <button
               className="px-8 w-full py-1 rounded-full font-semibold uppercase
               bg-gray-800 border-green-500 border-solid border-4 text-neutral-200
