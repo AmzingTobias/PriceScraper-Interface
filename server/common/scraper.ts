@@ -1,4 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
+import { get_today_date_as_string_with_time } from "./date";
 
 const PROGRAM_LOGS_MAX_SIZE = 100;
 
@@ -53,7 +54,10 @@ class PriceScraperConnection {
       this.programLogs.shift();
     }
     try {
-      this.programLogs.push(`${data.toString().trim()}`);
+      const date = Date.now();
+      this.programLogs.push(
+        `${get_today_date_as_string_with_time()} ${data.toString().trim()}`
+      );
     } catch {}
   }
 
