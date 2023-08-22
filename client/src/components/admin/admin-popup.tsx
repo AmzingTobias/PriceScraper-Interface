@@ -2,39 +2,22 @@ import { useEffect, useState } from "react";
 import AdminBtn from "./admin-btn";
 import { useNavigate } from "react-router-dom";
 
-const isUserAdmin = (): Promise<boolean> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const isAdminResponse = await fetch("/api/users/admin");
-      if (isAdminResponse.ok) {
-        const isAdminJson: boolean = await isAdminResponse.json();
-        resolve(isAdminJson);
-      } else {
-        reject("Error in request");
-      }
-    } catch {
-      reject("Error in request");
-    }
-  });
-};
-
 type adminMenuLinkItem = {
   displayName: string;
   navLink: string;
 };
 
 interface IAdminPopupProps {
-  userAuthToken: string;
+  userIsAdmin: boolean;
 }
 
-const AdminPopup: React.FC<IAdminPopupProps> = ({ userAuthToken }) => {
-  const [admin, setAdmin] = useState(false);
+const AdminPopup: React.FC<IAdminPopupProps> = ({ userIsAdmin }) => {
   const [popupOpen, setPopupOpen] = useState<boolean>(false);
 
   const adminMenuItems: adminMenuLinkItem[] = [
     { displayName: "New Product", navLink: "/admin/products/new" },
     { displayName: "New Image", navLink: "/admin/images/new" },
-    { displayName: "Manage Products", navLink: "/admin/products" },
+    { displayName: "PriceScraper Log", navLink: "/admin/scraper-log" },
     { displayName: "Manage Images", navLink: "/admin/images" },
   ];
 
@@ -45,17 +28,7 @@ const AdminPopup: React.FC<IAdminPopupProps> = ({ userAuthToken }) => {
     navigate(navLink, { replace: false });
   };
 
-  useEffect(() => {
-    isUserAdmin()
-      .then((isAdmin) => {
-        setAdmin(isAdmin);
-      })
-      .catch(() => {
-        setAdmin(false);
-      });
-  }, [userAuthToken]);
-
-  if (admin === false) {
+  if (userIsAdmin === false) {
     return <></>;
   } else {
     return (

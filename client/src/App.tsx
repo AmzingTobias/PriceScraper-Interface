@@ -60,8 +60,35 @@ function useStateAuthCookie(): [string, React.Dispatch<any>] {
   return [state, setState];
 }
 
+const isUserAdmin = (): Promise<boolean> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const isAdminResponse = await fetch("/api/users/admin");
+      if (isAdminResponse.ok) {
+        const isAdminJson: boolean = await isAdminResponse.json();
+        resolve(isAdminJson);
+      } else {
+        reject("Error in request");
+      }
+    } catch {
+      reject("Error in request");
+    }
+  });
+};
+
 export default function App() {
   const [userAuthToken, setUserAuthToken] = useStateAuthCookie();
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+
+  useEffect(() => {
+    isUserAdmin()
+      .then((isAdmin) => {
+        setUserIsAdmin(isAdmin);
+      })
+      .catch(() => {
+        setUserIsAdmin(false);
+      });
+  }, [userAuthToken]);
 
   Chart.register(...registerables);
 
@@ -88,10 +115,16 @@ export default function App() {
               })
             }
           />
-          <Route path="/admin/images/new" Component={ImageUploadPage} />
-          <Route path="/admin/products/new" Component={NewProductPage} />
+          <Route
+            path="/admin/images/new"
+            Component={() => ImageUploadPage({ userIsAdmin: userIsAdmin })}
+          />
+          <Route
+            path="/admin/products/new"
+            Component={() => NewProductPage({ userIsAdmin: userIsAdmin })}
+          />
         </Routes>
-        <AdminPopup userAuthToken={userAuthToken} />
+        <AdminPopup userIsAdmin={userIsAdmin} />
       </div>
     </div>
   );
