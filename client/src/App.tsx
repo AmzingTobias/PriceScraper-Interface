@@ -98,7 +98,10 @@ export default function App() {
       <NavBar authToken={userAuthToken} />
       <div>
         <Routes>
-          <Route path="/" Component={HomePage} />
+          <Route
+            path="/"
+            Component={() => HomePage({ authToken: userAuthToken })}
+          />
           <Route
             path="/login"
             Component={() => LoginPage({ setUserAuthToken: setUserAuthToken })}

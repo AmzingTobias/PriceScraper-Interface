@@ -14,6 +14,7 @@ import {
   createDiscordWebhook,
   deleteDiscordWebhook,
   getDiscordWebhookWithUserId,
+  getNotifiedProductsWithUserId,
   getUserNotificationSettingsWithId,
   isUserBeingNotifiedForProduct,
   linkUserToProductForNotification,
@@ -97,6 +98,29 @@ export const update_notifications_settings = async (
       .send(NO_PRICE_CHANGE_NOTIFICATIONS_MISSING_MSG);
   } else {
     res.status(BAD_REQUEST_CODE).send(ENABLE_NOTIFICATIONS_MISSING_MSG);
+  }
+};
+
+/**
+ * Get all the products a user is notified for
+ * @param req The request object, the user should be logged in
+ * @param res The response object
+ */
+export const get_products_user_notified_for = async (
+  req: Request,
+  res: Response
+) => {
+  if (req.user !== undefined) {
+    getNotifiedProductsWithUserId(req.user.Id)
+      .then((productIds) => {
+        res.json(productIds);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      });
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   }
 };
 

@@ -18,8 +18,11 @@ const ProductGrid: React.FC<IProductGridProps> = ({ product_info_list }) => {
         product-grid "
       >
         {product_info_list.map((item, index) => (
-          <div className="grid-item flex justify-center row-span-1 col-span-1">
-            <ProductCard key={index} product_info={item} />
+          <div
+            key={index}
+            className="grid-item flex justify-center row-span-1 col-span-1"
+          >
+            <ProductCard product_info={item} />
           </div>
         ))}
       </div>

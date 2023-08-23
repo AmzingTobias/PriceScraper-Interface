@@ -337,3 +337,34 @@ export const isUserBeingNotifiedForProduct = (
     );
   });
 };
+
+export type TProductList = {
+  ProductId: number;
+}[];
+
+/**
+ * Get all the products that a user is being notified for
+ * @param user_Id The User Id to get all the products they're being notified for
+ * @returns A promise for a list of product Id's, rejects on database errors
+ */
+export const getNotifiedProductsWithUserId = (
+  user_Id: number | string
+): Promise<TProductList> => {
+  return new Promise((resolve, reject) => {
+    db.all(
+      "SELECT Product_Id as `ProductId` FROM Product_notifications WHERE User_Id = ?",
+      user_Id,
+      function (err, rows) {
+        if (err) {
+          reject(err);
+        } else {
+          if (rows !== undefined) {
+            resolve(rows as TProductList);
+          } else {
+            resolve([]);
+          }
+        }
+      }
+    );
+  });
+};
