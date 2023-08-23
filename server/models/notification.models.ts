@@ -338,7 +338,7 @@ export const isUserBeingNotifiedForProduct = (
   });
 };
 
-type TProductList = {
+export type TProductList = {
   ProductId: number;
 }[];
 

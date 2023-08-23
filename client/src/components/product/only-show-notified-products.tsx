@@ -21,7 +21,7 @@ const OnlyShowNotifiedProductsBtn: React.FC<
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 w-12 h-12 md:w-16 md:h-16 mx-4 my-3">
+      <div className="fixed bottom-0 left-0 mx-4 my-3">
         <button
           className="px-6 w-full sm:w-max py-3 rounded-full font-semibold uppercase hover:bg-green-400 bg-green-500 text-gray-800 
           border-4 border-gray-800"

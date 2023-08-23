@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ProductGrid from "../../components/product-grid/product-grid";
 import { TProductCard } from "../../components/product-card/product-card";
 import { tProductEntry } from "../../../../server/models/product.models";
+import { TProductList } from "../../../../server/models/notification.models";
 import OnlyShowNotifiedProductsBtn, {
   ENotifiedProductsBtnStatus,
 } from "../../components/product/only-show-notified-products";
@@ -12,9 +13,10 @@ interface IHomePageProps {
 
 const HomePage: React.FC<IHomePageProps> = ({ authToken }) => {
   const [productData, setProductData] = useState<TProductCard[]>([]);
+  const [notifiedProductIds, setNotifiedProductIds] = useState<TProductList>();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProductData = async () => {
       try {
         const response = await fetch("/api/products");
         if (!response.ok) {
@@ -40,17 +42,43 @@ const HomePage: React.FC<IHomePageProps> = ({ authToken }) => {
       }
     };
 
-    fetchData();
+    const fetchNotifiedData = async () => {
+      try {
+        const response = await fetch("/api/notifications/user/product");
+        if (response.ok) {
+          const responseJson: TProductList = await response.json();
+          setNotifiedProductIds(responseJson);
+        } else {
+          setNotifiedProductIds(undefined);
+        }
+      } catch {
+        setNotifiedProductIds(undefined);
+      }
+    };
+
+    fetchProductData();
+    fetchNotifiedData();
   }, []);
 
   const [showNotifiedProductsState, setShowNotifiedProductsState] =
     useState<ENotifiedProductsBtnStatus>(
-      ENotifiedProductsBtnStatus.AllProducts
+      ENotifiedProductsBtnStatus.OnlyNotified
     );
 
   return (
     <>
-      <ProductGrid product_info_list={productData} />
+      {notifiedProductIds === undefined ||
+      showNotifiedProductsState === ENotifiedProductsBtnStatus.AllProducts ? (
+        <ProductGrid product_info_list={productData} />
+      ) : (
+        <ProductGrid
+          product_info_list={productData.filter((value) =>
+            notifiedProductIds.some(
+              (notifiedProduct) => notifiedProduct.ProductId === value.id
+            )
+          )}
+        />
+      )}
       {authToken === "" ? null : (
         <OnlyShowNotifiedProductsBtn
           state={showNotifiedProductsState}
