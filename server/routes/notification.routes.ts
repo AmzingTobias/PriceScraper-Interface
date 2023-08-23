@@ -9,6 +9,7 @@ import {
   remove_user_notification_for_product,
   update_notifications_settings,
   update_discord_webhook,
+  get_products_user_notified_for,
 } from "../controller/notification.controller";
 import { verify_token } from "../common/security";
 
@@ -49,6 +50,13 @@ notificationRouter.get(
 
 // Set the notification settings for a user
 notificationRouter.patch("/user", verify_token, update_notifications_settings);
+
+// Get a list of product Id's that the user is being notified for
+notificationRouter.get(
+  "/user/product",
+  verify_token,
+  get_products_user_notified_for
+);
 
 // Get if a user is being notified for a product
 notificationRouter.get(
