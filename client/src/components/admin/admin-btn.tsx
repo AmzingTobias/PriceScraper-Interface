@@ -10,7 +10,7 @@ const AdminBtn: React.FC<IAdminBtnProps> = ({ open, setOpen }) => {
   return (
     <div
       onClick={() => setOpen((previousData) => !previousData)}
-      className="fixed bottom-0 right-0 w-12 h-12 md:w-16 md:h-16 hover:bg-green-400 bg-green-500 rounded-full shadow-md flex items-center justify-center cursor-pointer m-4 text-gray-800 text-2xl"
+      className="fixed bottom-0 right-0 w-12 h-12 md:w-16 md:h-16 hover:bg-green-400 bg-green-500 border-4 border-gray-800 rounded-full shadow-md flex items-center justify-center cursor-pointer m-4 text-gray-800 text-2xl"
     >
       {open ? <AiOutlineMinus /> : <AiOutlinePlus />}
     </div>

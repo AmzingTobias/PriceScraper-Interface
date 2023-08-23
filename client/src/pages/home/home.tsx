@@ -2,8 +2,15 @@ import { useEffect, useState } from "react";
 import ProductGrid from "../../components/product-grid/product-grid";
 import { TProductCard } from "../../components/product-card/product-card";
 import { tProductEntry } from "../../../../server/models/product.models";
+import OnlyShowNotifiedProductsBtn, {
+  ENotifiedProductsBtnStatus,
+} from "../../components/product/only-show-notified-products";
 
-const HomePage = () => {
+interface IHomePageProps {
+  authToken: string;
+}
+
+const HomePage: React.FC<IHomePageProps> = ({ authToken }) => {
   const [productData, setProductData] = useState<TProductCard[]>([]);
 
   useEffect(() => {
@@ -36,7 +43,22 @@ const HomePage = () => {
     fetchData();
   }, []);
 
-  return <ProductGrid product_info_list={productData} />;
+  const [showNotifiedProductsState, setShowNotifiedProductsState] =
+    useState<ENotifiedProductsBtnStatus>(
+      ENotifiedProductsBtnStatus.AllProducts
+    );
+
+  return (
+    <>
+      <ProductGrid product_info_list={productData} />
+      {authToken === "" ? null : (
+        <OnlyShowNotifiedProductsBtn
+          state={showNotifiedProductsState}
+          setState={setShowNotifiedProductsState}
+        />
+      )}
+    </>
+  );
 };
 
 export default HomePage;
