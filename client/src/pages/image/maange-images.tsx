@@ -43,16 +43,16 @@ const ManageImagesPage: React.FC<IManageImagesPageProps> = ({
     return <></>;
   }
 
-  const deleteImage = (productId: number) => {
-    console.log("Deleting image: ", productId);
+  const deleteImage = (imageId: number) => {
+    console.log("Deleting image: ", imageId);
     try {
-      fetch(`/api/images/${productId}`, {
+      fetch(`/api/images/${imageId}`, {
         method: "DELETE",
       }).then((response) => {
         if (response.ok) {
           // Image deleted
           setAllImages((previousList) =>
-            previousList.filter((image) => image.Id !== productId)
+            previousList.filter((image) => image.Id !== imageId)
           );
         } else {
           // Image couldn't be deleted
@@ -87,7 +87,7 @@ const ManageImagesPage: React.FC<IManageImagesPageProps> = ({
                     key={index}
                     imageLink={image.Link}
                     userIsAdmin={userIsAdmin}
-                    productId={image.Id}
+                    imageId={image.Id}
                     deleteImageFunc={deleteImage}
                   />
                 ))}
