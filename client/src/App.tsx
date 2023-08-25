@@ -13,6 +13,7 @@ import AdminPopup from "./components/admin/admin-popup";
 import ImageUploadPage from "./pages/image/image-upload";
 import NewProductPage from "./pages/product/new-product";
 import PriceScraperLogPage from "./pages/admin/price-scraper-log";
+import ManageImagesPage from "./pages/image/maange-images";
 
 function validateAuthToken(authToken: string) {
   try {
@@ -130,6 +131,10 @@ export default function App() {
           <Route
             path="/admin/scraper-log"
             Component={() => PriceScraperLogPage({ userIsAdmin: userIsAdmin })}
+          />
+          <Route
+            path="/admin/images"
+            Component={() => ManageImagesPage({ userIsAdmin: userIsAdmin })}
           />
         </Routes>
         <AdminPopup userIsAdmin={userIsAdmin} />

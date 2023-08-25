@@ -10,11 +10,14 @@ import {
   addImage,
   deleteImage,
   getAllImages,
+  getImageWithId,
   getImageWithProductId,
   linkProductToImage,
   unlinkProductFromImage,
 } from "../models/image.models";
 import { isUserAdmin } from "../models/user.models";
+import path from "path";
+import fs from "fs";
 
 /**
  * Add a new image to the database
@@ -57,20 +60,36 @@ export const remove_image = async (req: Request, res: Response) => {
         .status(INTERNAL_SERVER_ERROR_CODE)
         .send("Image Id missing from request");
     } else {
-      deleteImage(Number(image_id))
-        .then((image_deleted) => {
-          if (image_deleted) {
-            res.send("Image deleted");
-          } else {
-            res
-              .status(BAD_REQUEST_CODE)
-              .send("Image could not be deleted, because it does not exist");
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-        });
+      getImageWithId(image_id).then((imageToDelete) => {
+        if (imageToDelete !== null) {
+          const filepath = path.join(__dirname, "../", imageToDelete.Link);
+          fs.unlink(filepath, (err) => {
+            if (err) {
+              console.error(err);
+              res
+                .status(INTERNAL_SERVER_ERROR_CODE)
+                .send("Error removing image");
+            } else {
+              deleteImage(Number(image_id))
+                .then((image_deleted) => {
+                  if (image_deleted) {
+                    res.send("Image deleted");
+                  } else {
+                    res
+                      .status(BAD_REQUEST_CODE)
+                      .send(
+                        "Image could not be deleted, because it does not exist"
+                      );
+                  }
+                })
+                .catch((err) => {
+                  console.error(err);
+                  res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+                });
+            }
+          });
+        }
+      });
     }
   } else {
     res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");

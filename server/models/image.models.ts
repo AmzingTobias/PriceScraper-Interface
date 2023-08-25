@@ -153,6 +153,34 @@ export const getImageWithProductId = (
 };
 
 /**
+ * Get an image using its id
+ * @param imageId The Id of the image to get
+ * @returns A promise with an image entry, or null if the image doesn't exist
+ * Rejects on database errors
+ */
+export const getImageWithId = (
+  imageId: number | string
+): Promise<tImageEntry | null> => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      "SELECT Id, Image_link AS `Link` FROM Images WHERE Id = ?",
+      imageId,
+      (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          if (row === undefined) {
+            resolve(null);
+          } else {
+            resolve(row as tImageEntry);
+          }
+        }
+      }
+    );
+  });
+};
+
+/**
  * Get all images stored in the database
  * @returns A promise for a list of all image entries, the list is empty if no images exist.
  * Rejects on database erros
