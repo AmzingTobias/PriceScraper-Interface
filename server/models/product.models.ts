@@ -6,6 +6,7 @@ const db = getDatabase();
 export type tProductEntry = {
   Id: number;
   Name: string;
+  Description: string;
 };
 
 /**
@@ -19,7 +20,7 @@ export const getProductWithId = (
 ): Promise<tProductEntry | null> => {
   return new Promise((resolve, reject) => {
     db.get(
-      "SELECT Id, Name FROM Products WHERE Id = ?",
+      "SELECT Id, Name, Description FROM Products WHERE Id = ?",
       productId,
       (err, row) => {
         if (err) {
@@ -60,16 +61,18 @@ export const getAllProducts = (): Promise<tProductEntry[]> => {
 /**
  * Create a new product in the database
  * @param product_name The product name for the new product
+ * @param product_description The product description, or null
  * @returns A boolean and number promise. True if the product is created, false
  * if the product already exists. The number represents the Id of the newly created product Rejects on database errors
  */
 export const createProduct = (
-  product_name: string
+  product_name: string,
+  product_description: string | null
 ): Promise<[boolean, number]> => {
   return new Promise((resolve, reject) => {
     db.run(
-      "INSERT INTO Products (Name) VALUES (?)",
-      product_name,
+      "INSERT INTO Products (Name, Description) VALUES (?, ?)",
+      [product_name, product_description],
       function (err) {
         if (err) {
           const errorWithNumber = err as { errno?: number };

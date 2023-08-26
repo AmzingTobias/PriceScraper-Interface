@@ -66,12 +66,16 @@ export const get_all_products = async (req: Request, res: Response) => {
  */
 export const add_product = async (req: Request, res: Response) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
-    const { name } = req.body;
+    const { name, description } = req.body;
     // Check name was passed through
     if (typeof name !== "undefined") {
       const [product_name_valid, product_name] = validate_product_name(name);
+      const product_description =
+        description === undefined || description.trim().length === 0
+          ? null
+          : description.trim();
       if (product_name_valid) {
-        createProduct(product_name)
+        createProduct(product_name, product_description)
           .then((product_created) => {
             if (product_created[0]) {
               res.send(`Product: ${product_name} created`);
@@ -108,7 +112,10 @@ export const add_product_full = async (req: Request, res: Response) => {
     const product_sites: undefined | string | string[] = req.body.Sites;
 
     if (product_name !== undefined && product_description !== undefined) {
-      const product_created = await createProduct(product_name);
+      const product_created = await createProduct(
+        product_name,
+        product_description
+      );
       let sites_created = true;
       let image_linked = true;
       if (product_created[0]) {
