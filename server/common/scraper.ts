@@ -54,7 +54,6 @@ class PriceScraperConnection {
       this.programLogs.shift();
     }
     try {
-      const date = Date.now();
       this.programLogs.push(
         `${get_today_date_as_string_with_time()} ${data.toString().trim()}`
       );
