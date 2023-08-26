@@ -9,7 +9,7 @@ import ProductTitle from "./product-title";
 interface IProductDetailsProps {
   productId: number;
   name: string;
-  synopsis: string;
+  synopsis: string | null;
   image: string;
   prices: tPriceEntry[];
   userNotifiedForProduct: boolean;

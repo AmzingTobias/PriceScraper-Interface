@@ -1,13 +1,9 @@
 interface IProductSynposisProps {
-  synopsis: string;
+  synopsis: string | null;
 }
 
 const ProductSynopsis: React.FC<IProductSynposisProps> = ({ synopsis }) => {
-  return (
-    <>
-      <p>{synopsis}</p>
-    </>
-  );
+  return <>{synopsis === null ? null : <p>{synopsis}</p>}</>;
 };
 
 export default ProductSynopsis;

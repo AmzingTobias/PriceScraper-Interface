@@ -11,15 +11,15 @@ interface IProductPageProps {
   authToken: string;
 }
 
-const getProductName = (productId: string): Promise<string> => {
+const getProductDetails = (productId: string): Promise<tProductEntry> => {
   return new Promise(async (resolve, reject) => {
     try {
       const productResponse = await fetch(`/api/products/${productId}`);
       if (productResponse.ok) {
         const productJson: tProductEntry = await productResponse.json();
-        resolve(productJson.Name);
+        resolve(productJson);
       } else {
-        resolve("");
+        reject("Error");
       }
     } catch {
       reject("Error");
@@ -92,6 +92,9 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
   const navigate = useNavigate();
   const { productId } = useParams();
   const [productName, setProductName] = useState<string>("");
+  const [productDescription, setProductDescription] = useState<string | null>(
+    null
+  );
   useEffect(() => {
     if (productId === undefined) {
       navigate("/", { replace: false });
@@ -99,8 +102,9 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
     }
     const fetchProductName = async (productId: string) => {
       try {
-        const name = await getProductName(productId);
-        setProductName(name);
+        const details = await getProductDetails(productId);
+        setProductName(details.Name);
+        setProductDescription(details.Description);
       } catch {
         navigate("/", { replace: false });
       }
@@ -160,8 +164,6 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
     fetchNotifiedForProduct(productId);
   }, [navigate, productId, props.authToken]);
 
-  const synopsis =
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
   return (
     <>
       <div className="flex flex-col items-center">
@@ -179,7 +181,7 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
             <ProductDetails
               productId={Number(productId)}
               name={productName}
-              synopsis={synopsis}
+              synopsis={productDescription}
               image={productImage}
               prices={productPrices}
               userNotifiedForProduct={userNotifiedForProduct}
