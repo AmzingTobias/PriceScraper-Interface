@@ -124,6 +124,32 @@ export const renameProductWithId = (
 };
 
 /**
+ * Change a products description with an Id
+ * @param product_id The Id of the product to change the description for
+ * @param new_description The description for the product
+ * @returns A boolean promise, true if the description has been changed, false if the product doesn't exist.
+ * Rejects on database errors
+ */
+export const changeProductDescriptionWithId = (
+  product_id: number | string,
+  new_description: string | null
+): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      "UPDATE Products SET Description = ? WHERE Id = ?",
+      [new_description, product_id],
+      function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.changes > 0);
+        }
+      }
+    );
+  });
+};
+
+/**
  * Delete a product from the database
  * @param product_id The Id of the product to delete
  * @returns A promise boolean, true if the product is deleted, false
