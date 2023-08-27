@@ -9,6 +9,7 @@ import ProductPriceHistory from "../../components/product-details/product-price-
 
 interface IProductPageProps {
   authToken: string;
+  isUserAdmin: boolean;
 }
 
 const getProductDetails = (productId: string): Promise<tProductEntry> => {
@@ -187,6 +188,7 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
               userNotifiedForProduct={userNotifiedForProduct}
               setUserNotifiedForProduct={setUserNotifiedForProduct}
               authToken={props.authToken}
+              isUserAdmin={props.isUserAdmin}
             />
           </div>
           {productPrices.length > 1 ? (

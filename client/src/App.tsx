@@ -109,7 +109,12 @@ export default function App() {
           />
           <Route
             path="/product/:productId"
-            Component={() => ProductPage({ authToken: userAuthToken })}
+            Component={() =>
+              ProductPage({
+                authToken: userAuthToken,
+                isUserAdmin: userIsAdmin,
+              })
+            }
           />
           <Route
             path="/settings"
