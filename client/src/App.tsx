@@ -14,6 +14,7 @@ import ImageUploadPage from "./pages/image/image-upload";
 import NewProductPage from "./pages/product/new-product";
 import PriceScraperLogPage from "./pages/admin/price-scraper-log";
 import ManageImagesPage from "./pages/image/maange-images";
+import ManageProductPage from "./pages/product/manage-product";
 
 function validateAuthToken(authToken: string) {
   try {
@@ -109,7 +110,12 @@ export default function App() {
           />
           <Route
             path="/product/:productId"
-            Component={() => ProductPage({ authToken: userAuthToken })}
+            Component={() =>
+              ProductPage({
+                authToken: userAuthToken,
+                isUserAdmin: userIsAdmin,
+              })
+            }
           />
           <Route
             path="/settings"
@@ -127,6 +133,10 @@ export default function App() {
           <Route
             path="/admin/products/new"
             Component={() => NewProductPage({ userIsAdmin: userIsAdmin })}
+          />
+          <Route
+            path="/admin/products/:productId"
+            Component={() => ManageProductPage({ userIsAdmin: userIsAdmin })}
           />
           <Route
             path="/admin/scraper-log"

@@ -44,7 +44,6 @@ const ManageImagesPage: React.FC<IManageImagesPageProps> = ({
   }
 
   const deleteImage = (imageId: number) => {
-    console.log("Deleting image: ", imageId);
     try {
       fetch(`/api/images/${imageId}`, {
         method: "DELETE",

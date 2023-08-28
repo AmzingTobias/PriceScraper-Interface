@@ -11,6 +11,7 @@ import {
   UNAUTHORIZED_REQUEST_CODE,
 } from "../common/status_codes";
 import {
+  changeProductDescriptionWithId,
   createProduct,
   deleteProduct,
   getAllProducts,
@@ -195,6 +196,40 @@ export const rename_product = async (req: Request, res: Response) => {
       res.status(BAD_REQUEST_CODE).send(PRODUCT_NAME_MISSING_MSG);
     } else {
       res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
+    }
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+  }
+};
+
+/**
+ * Change a product descriptions
+ * @param req The request object. It should contain an Id for the product in its parameters and a
+ * new description in the request body
+ * @param res The response object
+ */
+export const change_product_description = async (
+  req: Request,
+  res: Response
+) => {
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    const { id } = req.params;
+    const { description } = req.body;
+    if (id === undefined || typeof description !== `string`) {
+      res.status(BAD_REQUEST_CODE).send("Missing parameters");
+    } else {
+      changeProductDescriptionWithId(id, description)
+        .then((changed) => {
+          if (changed) {
+            res.send("Description updated");
+          } else {
+            res.status(BAD_REQUEST_CODE).send("Product does not exist");
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+        });
     }
   } else {
     res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");

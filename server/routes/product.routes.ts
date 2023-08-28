@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import { Router } from "express";
 import {
   add_product,
   get_all_products,
@@ -6,6 +6,7 @@ import {
   delete_product,
   get_product,
   add_product_full,
+  change_product_description,
 } from "../controller/product.controllers";
 import { verify_token, verify_token_is_admin } from "../common/security";
 
@@ -35,7 +36,14 @@ productRouter.post(
 productRouter.get("/:productId", get_product);
 
 // Used for renaming a product, with a new unique name
-productRouter.patch("/:id", verify_token, rename_product);
+productRouter.patch("/name/:id", verify_token, rename_product);
+
+// Used for changing a products description
+productRouter.patch(
+  "/description/:id",
+  verify_token,
+  change_product_description
+);
 
 // Used for deleting a product
 productRouter.delete("/:id", verify_token, delete_product);

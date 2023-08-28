@@ -6,46 +6,15 @@ import { tPriceEntry } from "../../../../server/models/price.models";
 import product_card_missing from "../../assets/product_card_missing.png";
 import ProductDetails from "../../components/product-details/product-details";
 import ProductPriceHistory from "../../components/product-details/product-price-history";
+import {
+  fetchProductDetails,
+  fetchProductImageDetailsWithProductId,
+} from "../../common/products";
 
 interface IProductPageProps {
   authToken: string;
+  isUserAdmin: boolean;
 }
-
-const getProductDetails = (productId: string): Promise<tProductEntry> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const productResponse = await fetch(`/api/products/${productId}`);
-      if (productResponse.ok) {
-        const productJson: tProductEntry = await productResponse.json();
-        resolve(productJson);
-      } else {
-        reject("Error");
-      }
-    } catch {
-      reject("Error");
-    }
-  });
-};
-
-const getProductImageLink = (productId: string): Promise<string> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const imageResponse = await fetch(`/api/images/product/${productId}`);
-      if (imageResponse.ok) {
-        const imageJson: tImageEntry = await imageResponse.json();
-        if (imageJson === null) {
-          resolve(product_card_missing);
-        } else {
-          resolve(imageJson.Link);
-        }
-      } else {
-        reject("Error with image request");
-      }
-    } catch {
-      reject("Error with image request");
-    }
-  });
-};
 
 const getAllPricesForProduct = (productId: string): Promise<tPriceEntry[]> => {
   return new Promise(async (resolve, reject) => {
@@ -100,16 +69,16 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
       navigate("/", { replace: false });
       return;
     }
-    const fetchProductName = async (productId: string) => {
+    const getProductDetails = async (productId: string) => {
       try {
-        const details = await getProductDetails(productId);
+        const details = await fetchProductDetails(productId);
         setProductName(details.Name);
         setProductDescription(details.Description);
       } catch {
         navigate("/", { replace: false });
       }
     };
-    fetchProductName(productId);
+    getProductDetails(productId);
   }, [navigate, productId]);
 
   const [productImage, setProductImage] =
@@ -119,15 +88,19 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
       navigate("/", { replace: false });
       return;
     }
-    const fetchProductImage = async (productId: string) => {
+    const getProductImage = async (productId: string) => {
       try {
-        const image = await getProductImageLink(productId);
-        setProductImage(image);
+        const image = await fetchProductImageDetailsWithProductId(productId);
+        if (image === undefined) {
+          setProductImage(product_card_missing);
+        } else {
+          setProductImage(image.Link);
+        }
       } catch {
         navigate("/", { replace: false });
       }
     };
-    fetchProductImage(productId);
+    getProductImage(productId);
   }, [navigate, productId]);
 
   const [productPrices, setProductPrices] = useState<tPriceEntry[]>([]);
@@ -187,6 +160,7 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
               userNotifiedForProduct={userNotifiedForProduct}
               setUserNotifiedForProduct={setUserNotifiedForProduct}
               authToken={props.authToken}
+              isUserAdmin={props.isUserAdmin}
             />
           </div>
           {productPrices.length > 1 ? (

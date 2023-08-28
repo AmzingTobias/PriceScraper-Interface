@@ -5,6 +5,8 @@ import ProductNotifyBtn from "./product-notify-btn";
 import ProductPrice from "./product-price";
 import ProductSynopsis from "./product-synposis";
 import ProductTitle from "./product-title";
+import { BsPencil } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 
 interface IProductDetailsProps {
   productId: number;
@@ -15,6 +17,7 @@ interface IProductDetailsProps {
   userNotifiedForProduct: boolean;
   setUserNotifiedForProduct: React.Dispatch<React.SetStateAction<boolean>>;
   authToken: string;
+  isUserAdmin: boolean;
 }
 
 function enableNotificationsRequest(productId: number): Promise<boolean> {
@@ -70,12 +73,19 @@ const ProductDetails: React.FC<IProductDetailsProps> = ({
   userNotifiedForProduct,
   setUserNotifiedForProduct,
   authToken,
+  isUserAdmin,
 }) => {
+  const navigate = useNavigate();
+
   const goToPricePage = (event: FormEvent) => {
     event.preventDefault();
     if (prices.length > 0) {
       window.open(prices[prices.length - 1].Site_link, "_blank");
     }
+  };
+
+  const goToManageProductPage = () => {
+    navigate(`/admin/products/${productId}`, { replace: false });
   };
 
   const enableNotifications = (event: FormEvent) => {
@@ -108,7 +118,17 @@ const ProductDetails: React.FC<IProductDetailsProps> = ({
           />
         </div>
         <div className="mx-2 mt-4 md:ml-4 md:mt-4 md:w-full">
-          <ProductTitle productName={name} />
+          <div className="flex flex-row">
+            <ProductTitle productName={name} />
+            {isUserAdmin ? (
+              <button
+                className="ml-auto text-xl mr-2"
+                onClick={goToManageProductPage}
+              >
+                <BsPencil />
+              </button>
+            ) : null}
+          </div>
           <hr className="my-4 w-full" />
           <div className="flex flex-col-reverse lg:flex-row">
             <div className="w-full lg:w-3/4">

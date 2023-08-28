@@ -4,7 +4,6 @@ function fetchScraperLog(): Promise<string[]> {
   return new Promise(async (resolve, reject) => {
     try {
       const logResponse = await fetch("/api/scraper/log");
-      console.log(logResponse);
       if (logResponse.ok) {
         const logJson = await logResponse.json();
         resolve(logJson);

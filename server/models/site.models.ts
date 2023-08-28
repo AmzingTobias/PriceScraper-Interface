@@ -3,7 +3,7 @@ import { getDatabase } from "../data/database";
 
 const db = getDatabase();
 
-type tSiteEntry = {
+export type tSiteEntry = {
   Id: number;
   Link: string;
   ProductId: number;
