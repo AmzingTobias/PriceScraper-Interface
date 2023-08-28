@@ -3,6 +3,7 @@ import {
   add_image,
   get_all_images,
   get_image_for_product,
+  get_image_with_id,
   remove_image,
   remove_image_from_product,
   set_image_for_product,
@@ -17,6 +18,9 @@ const upload = multer({ dest: path.join(__dirname, "..\\uploads") });
 
 // Get all images from the database
 imageRouter.get("/", verify_token, get_all_images);
+
+// Get an image with Id
+imageRouter.get("/:id", verify_token, get_image_with_id);
 
 // Add a new image to the database
 imageRouter.post(

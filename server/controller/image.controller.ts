@@ -105,8 +105,8 @@ export const set_image_for_product = async (req: Request, res: Response) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
     const { productId } = req.params;
     const image_id = req.body["ImageId"];
-    if (typeof productId === "number" && typeof image_id === "number") {
-      linkProductToImage(image_id, productId)
+    if (typeof productId !== "undefined" && typeof image_id === "number") {
+      linkProductToImage(image_id, Number(productId))
         .then((linked) => {
           if (linked) {
             res.send(`Product: ${productId} linked to image: ${image_id}`);
@@ -120,7 +120,7 @@ export const set_image_for_product = async (req: Request, res: Response) => {
           console.error(err);
           res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
         });
-    } else if (typeof productId !== "number") {
+    } else if (typeof productId === "undefined") {
       res.status(BAD_REQUEST_CODE).send(PRODUCT_ID_MISSING_MSG);
     } else {
       res.status(BAD_REQUEST_CODE).send(IMAGE_ID_MISSING_MSG);
@@ -199,6 +199,26 @@ export const get_all_images = async (req: Request, res: Response) => {
     getAllImages()
       .then((image_entries) => {
         res.json(image_entries);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
+      });
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+  }
+};
+
+export const get_image_with_id = async (req: Request, res: Response) => {
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    const { id } = req.params;
+    getImageWithId(id)
+      .then((image) => {
+        if (image === null) {
+          res.status(BAD_REQUEST_CODE).send(null);
+        } else {
+          res.json(image);
+        }
       })
       .catch((err) => {
         console.error(err);
