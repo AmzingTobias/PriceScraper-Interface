@@ -209,6 +209,11 @@ export const get_all_images = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Get an image using an image Id
+ * @param req The request object. Should have an Id in the request params
+ * @param res The response object
+ */
 export const get_image_with_id = async (req: Request, res: Response) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
     const { id } = req.params;

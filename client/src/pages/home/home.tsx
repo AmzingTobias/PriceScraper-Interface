@@ -65,18 +65,37 @@ const HomePage: React.FC<IHomePageProps> = ({ authToken }) => {
       ENotifiedProductsBtnStatus.OnlyNotified
     );
 
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
   return (
     <>
+      <div className="w-full px-10 mt-10">
+        <input
+          className="w-full bg-gray-700 box-border hover:outline-4 focus:outline-4 outline-none text-neutral-200
+            hover:outline-green-500 focus:outline-green-500 rounded-2xl px-4 py-2"
+          placeholder="Search"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       {notifiedProductIds === undefined ||
       showNotifiedProductsState === ENotifiedProductsBtnStatus.AllProducts ? (
-        <ProductGrid product_info_list={productData} />
-      ) : (
         <ProductGrid
           product_info_list={productData.filter((value) =>
-            notifiedProductIds.some(
-              (notifiedProduct) => notifiedProduct.ProductId === value.id
-            )
+            value.name.toLowerCase().includes(searchTerm.toLowerCase())
           )}
+        />
+      ) : (
+        <ProductGrid
+          product_info_list={productData
+            .filter((value) =>
+              notifiedProductIds.some(
+                (notifiedProduct) => notifiedProduct.ProductId === value.id
+              )
+            )
+            .filter((value) =>
+              value.name.toLowerCase().includes(searchTerm.toLowerCase())
+            )}
         />
       )}
       {authToken === "" ? null : (
