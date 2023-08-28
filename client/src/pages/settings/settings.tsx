@@ -48,6 +48,10 @@ const SettingsPage: React.FC<ISettingsPageProps> = ({
 
   const notificationTabs: ENotificationTabs[] = [ENotificationTabs.Discord];
 
+  if (authToken === "") {
+    return <></>;
+  }
+
   return (
     <>
       <div className="flex flex-col items-center">

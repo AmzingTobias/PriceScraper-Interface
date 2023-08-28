@@ -11,7 +11,6 @@ import {
   updateProductDescription,
   updateProductName,
 } from "../../common/products";
-import product_card_missing from "../../assets/product_card_missing.png";
 import ManageProductForm from "../../components/product/manage-product-form";
 import { tImageEntry } from "../../../../server/models/image.models";
 
@@ -65,7 +64,7 @@ const ManageProductPage: React.FC<IManageProductPageProps> = ({
         setOriginalSites([]);
         setProductSites([]);
       });
-  }, []);
+  }, [productId]);
 
   const handleFormSubmit = async (event: FormEvent) => {
     event.preventDefault();

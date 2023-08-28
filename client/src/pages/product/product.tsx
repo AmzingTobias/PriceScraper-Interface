@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { tProductEntry } from "../../../../server/models/product.models";
-import { tImageEntry } from "../../../../server/models/image.models";
 import { tPriceEntry } from "../../../../server/models/price.models";
 import product_card_missing from "../../assets/product_card_missing.png";
 import ProductDetails from "../../components/product-details/product-details";

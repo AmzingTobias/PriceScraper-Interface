@@ -1,7 +1,6 @@
 import { tImageEntry } from "../../../server/models/image.models";
 import { tProductEntry } from "../../../server/models/product.models";
 import { tSiteEntry } from "../../../server/models/site.models";
-import product_card_missing from "../assets/product_card_missing.png";
 
 export const fetchProductDetails = (
   productId: string

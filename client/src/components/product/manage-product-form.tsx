@@ -1,12 +1,9 @@
 import { IoTrashOutline } from "react-icons/io5";
 import { tSiteEntry } from "../../../../server/models/site.models";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import product_card_missing from "../../assets/product_card_missing.png";
 import { tImageEntry } from "../../../../server/models/image.models";
-import {
-  fetchProductImageDetailsWithId,
-  fetchProductImageDetailsWithProductId,
-} from "../../common/products";
+import { fetchProductImageDetailsWithId } from "../../common/products";
 
 interface IManageProductFormProps {
   productId: string | number;
