@@ -14,6 +14,14 @@ const ImageUploadForm = () => {
         fetch("/api/images/", {
           method: "POST",
           body: formData,
+        }).then((uploaded) => {
+          if (uploaded.ok) {
+            alert("Image uploaded");
+            setImageData(undefined);
+            setImageUrl(product_card_missing);
+          } else {
+            alert("Image failed to upload, please try again");
+          }
         });
       } catch {}
     }
