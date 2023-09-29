@@ -12,7 +12,20 @@ import { verify_token, verify_token_is_admin } from "../common/security";
 
 import multer from "multer";
 import path from "path";
-const upload = multer({ dest: path.join(__dirname, "..\\uploads") });
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../uploads"));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    console.log(file);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
+const upload = multer({ storage: storage });
 
 // A router for product specific api calls
 export const productRouter: Router = Router();
