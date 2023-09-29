@@ -14,8 +14,7 @@ export const imageRouter = Router();
 
 import multer from "multer";
 import path from "path";
-const upload = multer({ dest: path.join(__dirname, "..\\uploads") });
-
+const upload = multer({ dest: path.join(__dirname, "/uploads") });
 // Get all images from the database
 imageRouter.get("/", verify_token, get_all_images);
 
