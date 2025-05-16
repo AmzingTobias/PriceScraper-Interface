@@ -112,7 +112,7 @@ const ManageProductForm: React.FC<IManageProductFormProps> = ({
                 placeholder="Product description"
                 value={
                   productDescription === null ||
-                  productDescription === undefined
+                    productDescription === undefined
                     ? ""
                     : productDescription
                 }
@@ -131,7 +131,7 @@ const ManageProductForm: React.FC<IManageProductFormProps> = ({
                 src={
                   productImage === undefined
                     ? product_card_missing
-                    : productImage.Link
+                    : `/uploads/${productImage.Link}`
                 }
                 alt="Upload preview"
                 width={240}

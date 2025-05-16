@@ -84,7 +84,7 @@ const ManageImagesPage: React.FC<IManageImagesPageProps> = ({
                 {allImages.map((image, index) => (
                   <ManageImageCard
                     key={index}
-                    imageLink={image.Link}
+                    imageLink={`/uploads/${image.Link}`}
                     userIsAdmin={userIsAdmin}
                     imageId={image.Id}
                     deleteImageFunc={deleteImage}

@@ -8,7 +8,6 @@ import { PRODUCT_ID_MISSING_MSG } from "../common/product";
 import {
   DISCORD_wEBHOOK_MISSING_MSG,
   ENABLE_NOTIFICATIONS_MISSING_MSG,
-  NO_PRICE_CHANGE_NOTIFICATIONS_MISSING_MSG,
 } from "../common/notification";
 import {
   createDiscordWebhook,
@@ -41,9 +40,6 @@ export const get_notification_setting_for_user = async (
           notification_settings.Enabled = Boolean(
             notification_settings.Enabled
           );
-          notification_settings.NoPriceChangeEnabled = Boolean(
-            notification_settings.NoPriceChangeEnabled
-          );
           res.json(notification_settings);
         }
       })
@@ -67,16 +63,13 @@ export const update_notifications_settings = async (
   res: Response
 ) => {
   const enable_notifications = req.body["Enable"];
-  const enable_no_price_change_notifications = req.body["NoPriceChangeEnable"];
   if (
-    typeof enable_notifications === "boolean" &&
-    typeof enable_no_price_change_notifications === "boolean"
+    typeof enable_notifications === "boolean"
   ) {
     // Only the user the request is for can update their notification settings
     if (req.user !== undefined) {
       updateNotificationSettingsWithUserId(req.user.Id, {
         Enabled: enable_notifications,
-        NoPriceChangeEnabled: enable_no_price_change_notifications,
       })
         .then((settings_updated) => {
           if (settings_updated) {
@@ -92,10 +85,6 @@ export const update_notifications_settings = async (
     } else {
       res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
     }
-  } else if (typeof enable_no_price_change_notifications !== "boolean") {
-    res
-      .status(BAD_REQUEST_CODE)
-      .send(NO_PRICE_CHANGE_NOTIFICATIONS_MISSING_MSG);
   } else {
     res.status(BAD_REQUEST_CODE).send(ENABLE_NOTIFICATIONS_MISSING_MSG);
   }

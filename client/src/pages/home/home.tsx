@@ -31,7 +31,7 @@ const HomePage: React.FC<IHomePageProps> = ({ authToken }) => {
           return {
             id: product.Id,
             name: product.Name,
-            image_link: imageData === null ? null : imageData.Link,
+            image_link: imageData === null ? null : `/uploads/${imageData.Link}`,
           };
         });
 
@@ -79,7 +79,7 @@ const HomePage: React.FC<IHomePageProps> = ({ authToken }) => {
         />
       </div>
       {notifiedProductIds === undefined ||
-      showNotifiedProductsState === ENotifiedProductsBtnStatus.AllProducts ? (
+        showNotifiedProductsState === ENotifiedProductsBtnStatus.AllProducts ? (
         <ProductGrid
           product_info_list={productData.filter((value) =>
             value.name.toLowerCase().includes(searchTerm.toLowerCase())

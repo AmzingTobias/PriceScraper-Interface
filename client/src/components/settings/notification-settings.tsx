@@ -34,7 +34,6 @@ const updateNotificationSettings = (
           },
           body: JSON.stringify({
             Enable: notificationSettings.Enabled,
-            NoPriceChangeEnable: notificationSettings.NoPriceChangeEnabled,
           }),
         }
       );
@@ -49,7 +48,6 @@ const NotificationSettings = () => {
   const [notificationSettings, setNotificationSettings] =
     useState<tUserNotificationSettings>({
       Enabled: false,
-      NoPriceChangeEnabled: false,
     });
   const [notificationsUpdated, setNotificationsUpdated] = useState<boolean>();
 
@@ -62,7 +60,6 @@ const NotificationSettings = () => {
         .catch((_err: any) => {
           setNotificationSettings({
             Enabled: false,
-            NoPriceChangeEnabled: false,
           });
         });
     }
@@ -100,27 +97,12 @@ const NotificationSettings = () => {
             <label>Enabled</label>
           </div>
           <div className="text-lg">
-            <input
-              className="bg-transparent before:bg-transparent m-1"
-              type="checkbox"
-              checked={
-                notificationSettings &&
-                notificationSettings.NoPriceChangeEnabled
-              }
-              onChange={(event) => {
-                setNotificationSettings((previousState) => ({
-                  ...previousState,
-                  NoPriceChangeEnabled: event.target.checked,
-                }));
-              }}
-            />
-            <label>No price change notifications</label>
             <div className="mt-2 font-semibold italic duration-75 animate-pulse">
               {notificationsUpdated !== undefined && notificationsUpdated ? (
                 <p className="text-green-500">Settings updated</p>
               ) : null}
               {notificationsUpdated !== undefined &&
-              notificationsUpdated === false ? (
+                notificationsUpdated === false ? (
                 <p className="text-red-500">Settings failed to update</p>
               ) : null}
             </div>

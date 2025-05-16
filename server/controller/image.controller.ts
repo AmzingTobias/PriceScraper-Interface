@@ -27,7 +27,7 @@ import fs from "fs";
 export const add_image = async (req: Request, res: Response) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
     if (req.file !== undefined) {
-      addImage(`/uploads/${req.file?.filename}`)
+      addImage(req.file?.filename)
         .then((image_added) => {
           if (image_added[0]) {
             res.send(`Image added`);

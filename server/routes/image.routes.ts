@@ -9,7 +9,7 @@ import {
   set_image_for_product,
 } from "../controller/image.controller";
 import { verify_token, verify_token_is_admin } from "../common/security";
-
+import { v4 as uuidv4 } from 'uuid';
 export const imageRouter = Router();
 
 import multer from "multer";
@@ -19,11 +19,10 @@ const storage = multer.diskStorage({
     cb(null, path.join(__dirname, "../uploads"));
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    console.log(file);
+    const filename = uuidv4();
     cb(
       null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+      filename + path.extname(file.originalname)
     );
   },
 });

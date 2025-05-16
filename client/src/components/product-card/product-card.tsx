@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 export type TProductCard = {
   id: number;
   name: string;
-  image_link: string;
+  image_link: string | null;
 };
 
 interface IProductCardProps {

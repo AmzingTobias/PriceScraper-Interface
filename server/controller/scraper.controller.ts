@@ -16,3 +16,24 @@ export const get_scraper_log = async (req: Request, res: Response) => {
     res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   }
 };
+
+
+/**
+ * Import a product from a supported site
+ * @param req The request object, should contain a name (for the product) in the
+ * body field of the request
+ * @param res The response object
+ */
+export const import_product = async (req: Request, res: Response) => {
+  if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
+    const { import_link } = req.body;
+    // Check name was passed through
+    if (typeof import_link !== "undefined" && typeof import_link == "string") {
+      const priceScraper = getScraperConnection();
+      priceScraper.importSiteToScraper(import_link);
+      res.status(200).send("Site requested for import, check logs for status");
+    }
+  } else {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+  }
+};

@@ -5,7 +5,6 @@ const db = getDatabase();
 
 export type tUserNotificationSettings = {
   Enabled: boolean;
-  NoPriceChangeEnabled: boolean;
 };
 
 /**
@@ -19,7 +18,7 @@ export const getUserNotificationSettingsWithId = (
 ): Promise<tUserNotificationSettings | null> => {
   return new Promise((resolve, reject) => {
     db.get(
-      "SELECT Enabled AS `Enabled`, No_price_change_enabled AS `NoPriceChangeEnabled` FROM Notifications WHERE User_Id = ?",
+      "SELECT Enabled AS `Enabled` FROM Notifications WHERE User_Id = ?",
       user_id,
       (err, row) => {
         if (err) {
@@ -49,10 +48,9 @@ export const updateNotificationSettingsWithUserId = (
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     db.run(
-      "UPDATE Notifications SET Enabled = ?, No_price_change_enabled = ? WHERE User_Id = ?",
+      "UPDATE Notifications SET Enabled = ? WHERE User_Id = ?",
       [
         notification_settings.Enabled ? 1 : 0,
-        notification_settings.NoPriceChangeEnabled ? 1 : 0,
         user_id,
       ],
       function (err) {
@@ -83,8 +81,8 @@ export const createNotificationSettingsForUser = (
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     db.run(
-      "INSERT INTO Notifications (User_Id, Enabled, No_price_change_enabled) VALUES (?, ?, ?)",
-      [user_id, 1, 0],
+      "INSERT INTO Notifications (User_Id, Enabled) VALUES (?, ?, ?)",
+      [user_id, 0],
       function (err) {
         if (err) {
           reject(err);
