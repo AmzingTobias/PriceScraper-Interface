@@ -23,7 +23,7 @@ class PriceScraperConnection {
       process.env.SCRAPER_PATH &&
       process.env.SCRAPER_CONFIG_PATH
     ) {
-      console.log("Starting scraper in import mode");
+      console.log("INFO: Starting scraper in import mode");
 
       const import_process = spawn(process.env.SCRAPER_PATH, [
         "import",
@@ -40,12 +40,12 @@ class PriceScraperConnection {
 
       // Handle close event
       import_process.on("close", (code) => {
-        this.addToLogs(`Scraper import exited with code ${code}`);
+        this.addToLogs(`INFO: Scraper import exited with code ${code}`);
       });
     }
     else {
       console.error("Missing required environment variables.");
-      this.addToLogs("Scraper import could not start: missing env vars.");
+      this.addToLogs("ERROR: Scraper import could not start: missing env vars.");
     }
   }
 
@@ -54,7 +54,7 @@ class PriceScraperConnection {
       process.env.SCRAPER_PATH &&
       process.env.SCRAPER_CONFIG_PATH
     ) {
-      console.log("Spawning scraper task...");
+      console.log("INFO: Spawning scraper task...");
 
       this.scraperProcess = spawn(process.env.SCRAPER_PATH, [
         "scrape",
@@ -71,10 +71,10 @@ class PriceScraperConnection {
 
       // Handle close event
       this.scraperProcess.on("close", (code) => {
-        this.addToLogs(`Scraper exited with code ${code}`);
+        this.addToLogs(`INFO: Scraper exited with code ${code}`);
         this.scraperProcess = undefined;
 
-        this.addToLogs("Restarting scraper after 30-minute delay...");
+        this.addToLogs("INFO: Restarting scraper after 30-minute delay...");
         // Wait 30 minutes before restarting
         setTimeout(() => {
           this.startScraperProcess();
@@ -83,11 +83,11 @@ class PriceScraperConnection {
 
       // Handle errors
       this.scraperProcess.on("error", (err) => {
-        this.addToLogs(`Scraper process error: ${err}`);
+        this.addToLogs(`ERROR: Scraper process error: ${err}`);
       });
     } else {
       console.error("Missing required environment variables.");
-      this.addToLogs("Scraper could not start: missing env vars.");
+      this.addToLogs("ERROR: Scraper could not start: missing env vars.");
     }
   }
 
