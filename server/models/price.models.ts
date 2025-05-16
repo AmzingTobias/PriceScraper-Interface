@@ -4,7 +4,7 @@ const db = getDatabase();
 
 export type tPriceEntry = {
   Price: number;
-  Date: string;
+  Date: number;
   Site_link: string;
 };
 

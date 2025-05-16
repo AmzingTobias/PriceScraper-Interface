@@ -1,4 +1,5 @@
 import { tPriceEntry } from "../../../../server/models/price.models";
+import { formatDateFromEpoch } from "../../common/date-format";
 
 interface IProductPriceProps {
   price: number;
@@ -24,7 +25,7 @@ const ProductPrice: React.FC<IProductPriceProps> = ({ price, lowestPrice }) => {
             £{lowestPrice?.Price.toFixed(PRICE_DECIMAL_DIGITS)}
           </span>
           {" on "}
-          <span className="italic text-sm">{lowestPrice?.Date}</span>
+          <span className="italic text-sm">{formatDateFromEpoch(lowestPrice?.Date)}</span>
         </p>
       ) : null}
     </>

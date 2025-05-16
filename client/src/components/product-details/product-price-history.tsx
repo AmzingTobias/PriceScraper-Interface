@@ -6,18 +6,45 @@ interface IProductPriceHistoryProps {
   prices: tPriceEntry[];
 }
 
+type tDailyLowest = {
+  date: string;
+  price: number;
+};
+
+function getDailyLowestPrices(data: tPriceEntry[]): tDailyLowest[] {
+  const dailyMap: Record<string, number[]> = {};
+
+  for (const point of data) {
+    const dateObj = new Date(point.Date * 1000);
+    const date = `${dateObj.getDate().toString().padStart(2, '0')}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getFullYear()}`;
+
+    if (!dailyMap[date]) {
+      dailyMap[date] = [];
+    }
+    dailyMap[date].push(point.Price);
+  }
+
+  const result: tDailyLowest[] = Object.entries(dailyMap).map(([date, prices]) => ({
+    date,
+    price: Math.min(...prices),
+  }));
+
+  return result;
+}
+
 const ProductPriceHistory: React.FC<IProductPriceHistoryProps> = ({
   prices,
 }) => {
+
+  const preprocessedChartData = getDailyLowestPrices(prices);
+
   const chartData = {
-    labels:
-      prices.length > 0 ? prices.map((priceEntry) => priceEntry.Date) : [],
+    labels: preprocessedChartData.map(d => d.date),
     datasets: [
       {
         stepped: true,
         label: "Price",
-        data:
-          prices.length > 0 ? prices.map((priceEntry) => priceEntry.Price) : [],
+        data: preprocessedChartData.map(d => d.price),
         fill: false,
         borderColor: "rgb(34, 197, 94)",
       },
@@ -74,9 +101,8 @@ const ProductPriceHistory: React.FC<IProductPriceHistoryProps> = ({
       tooltip: {
         callbacks: {
           label: (tooltipItem: TooltipItem<"line">): string => {
-            return `${prices[tooltipItem.dataIndex].Site_link}\n£${
-              tooltipItem.formattedValue
-            }`;
+            return `${prices[tooltipItem.dataIndex].Site_link}\n£${tooltipItem.formattedValue
+              }`;
           },
         },
       },
