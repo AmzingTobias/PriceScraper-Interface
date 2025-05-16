@@ -7,4 +7,4 @@ export const scraperRouter: Router = Router();
 // Get the log for the price scraper
 scraperRouter.use("/log", verify_token, get_scraper_log);
 
-scraperRouter.use("/import", verify_token, import_product);
+scraperRouter.post("/import", verify_token, import_product);

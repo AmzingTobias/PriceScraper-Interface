@@ -92,7 +92,7 @@ const ProductPage: React.FC<IProductPageProps> = (props) => {
         if (image === undefined) {
           setProductImage(product_card_missing);
         } else {
-          setProductImage(image.Link);
+          setProductImage(`/uploads/${image.Link}`);
         }
       } catch {
         navigate("/", { replace: false });

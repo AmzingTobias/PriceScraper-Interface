@@ -11,7 +11,7 @@ const ImportProductForm = () => {
             const productImportResponse = await fetch(
                 "/api/scraper/import",
                 {
-                    method: "PATCH",
+                    method: "POST",
                     headers: {
                         "Content-type": "application/json",
                     },
@@ -36,10 +36,10 @@ const ImportProductForm = () => {
         <>
             <div className="text-neutral-200">
                 <form onSubmit={handleFormSubmit}>
-                    <div className="sm:flex-row sm:flex">
-                        <div className="sm:w-8/12 mr-2">
+                    <div className="sm:flex-col sm:flex">
+                        <div className="w-full mr-2">
                             <div className="flex flex-col">
-                                <label className="mb-2 hidden" htmlFor="product-name">
+                                <label className="mb-2 hidden" htmlFor="import-link">
                                     Import Link
                                 </label>
                                 <input
@@ -47,9 +47,9 @@ const ImportProductForm = () => {
                                     className="w-full bg-gray-600 box-border outline-none text-neutral-200
             hover:outline-green-500 focus:outline-green-500 rounded-2xl px-4 py-2"
                                     type="text"
-                                    name="product-name"
-                                    id="product-name"
-                                    placeholder="Product Name"
+                                    name="import-link"
+                                    id="import-link"
+                                    placeholder="Import Link"
                                     value={importLink}
                                     onChange={(e) => setImportLink(e.target.value)}
                                 />
