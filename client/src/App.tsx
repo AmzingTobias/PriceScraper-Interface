@@ -12,6 +12,7 @@ import SettingsPage from "./pages/settings/settings";
 import AdminPopup from "./components/admin/admin-popup";
 import ImageUploadPage from "./pages/image/image-upload";
 import NewProductPage from "./pages/product/new-product";
+import ImportProductPage from "./pages/product/import-product";
 import PriceScraperLogPage from "./pages/admin/price-scraper-log";
 import ManageImagesPage from "./pages/image/maange-images";
 import ManageProductPage from "./pages/product/manage-product";
@@ -133,6 +134,10 @@ export default function App() {
           <Route
             path="/admin/products/new"
             Component={() => NewProductPage({ userIsAdmin: userIsAdmin })}
+          />
+          <Route
+            path="/admin/products/import"
+            Component={() => ImportProductPage({ userIsAdmin: userIsAdmin })}
           />
           <Route
             path="/admin/products/:productId"

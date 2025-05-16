@@ -15,6 +15,7 @@ const AdminPopup: React.FC<IAdminPopupProps> = ({ userIsAdmin }) => {
   const [popupOpen, setPopupOpen] = useState<boolean>(false);
 
   const adminMenuItems: adminMenuLinkItem[] = [
+    { displayName: "Import Product", navLink: "/admin/products/import" },
     { displayName: "New Product", navLink: "/admin/products/new" },
     { displayName: "New Image", navLink: "/admin/images/new" },
     { displayName: "PriceScraper Log", navLink: "/admin/scraper-log" },
