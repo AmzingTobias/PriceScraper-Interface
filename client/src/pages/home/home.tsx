@@ -62,7 +62,7 @@ const HomePage: React.FC<IHomePageProps> = ({ authToken }) => {
 
   const [showNotifiedProductsState, setShowNotifiedProductsState] =
     useState<ENotifiedProductsBtnStatus>(
-      ENotifiedProductsBtnStatus.OnlyNotified
+      ENotifiedProductsBtnStatus.AllProducts
     );
 
   const [searchTerm, setSearchTerm] = useState<string>("");
