@@ -17,6 +17,32 @@ export const get_scraper_log = async (req: Request, res: Response) => {
   }
 };
 
+function validateImportLink(link: string): string | null {
+  try {
+    const url = new URL(link);
+
+    // Only allow http/https
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return null;
+    }
+
+    // Block localhost/private networks (to prevent SSRF)
+    const hostname = url.hostname.toLowerCase();
+    if (
+      hostname === "localhost" ||
+      hostname.startsWith("127.") ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.endsWith(".local")
+    ) {
+      return null;
+    }
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Import a product from a supported site
@@ -27,13 +53,23 @@ export const get_scraper_log = async (req: Request, res: Response) => {
 export const import_product = async (req: Request, res: Response) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
     const { import_link } = req.body;
-    // Check name was passed through
-    if (typeof import_link !== "undefined" && typeof import_link == "string") {
+
+    if (typeof import_link === "string") {
+      const safeLink = validateImportLink(import_link);
+
+      if (!safeLink) {
+        return res.status(400).send("Invalid link");
+      }
+
       const priceScraper = getScraperConnection();
-      priceScraper.importSiteToScraper(import_link);
-      res.status(200).send("Site requested for import, check logs for status");
+      priceScraper.importSiteToScraper(safeLink);
+      return res
+        .status(200)
+        .send("Site requested for import, check logs for status");
+    } else {
+      return res.status(400).send("Missing import_link in request body");
     }
   } else {
-    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+    return res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
   }
 };
