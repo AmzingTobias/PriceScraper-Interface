@@ -1,46 +1,87 @@
-# Getting Started with Create React App
+# PriceScraper Client — Next.js 16
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern frontend for PriceScraper, rebuilt with **Next.js 16**, **React 19**, **Tailwind CSS v4**, and **TypeScript**. Designed for deployment on the **Vercel Hobby plan**.
 
-## Available Scripts
+## Stack
 
-In the project directory, you can run:
+- **Next.js 16.1** — App Router, Turbopack
+- **React 19** — Latest React with hooks
+- **Tailwind CSS v4** — Utility-first styling via `@tailwindcss/postcss`
+- **Chart.js + react-chartjs-2** — Price history charts
+- **Lucide React** — Icon library
+- **js-cookie + jwt-decode** — Auth token management
 
-### `npm start`
+## Getting Started
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```bash
+# Install dependencies
+npm install
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+# Run in development (Turbopack)
+npm run dev
 
-### `npm test`
+# Build for production
+npm run build
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Start production server
+npm start
+```
 
-### `npm run build`
+## Environment Variables
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Create a `.env.local` file (or set in Vercel dashboard):
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+NEXT_PUBLIC_API_URL=https://your-backend-server.com
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The app proxies `/api/*` and `/uploads/*` to this backend URL via Next.js rewrites configured in `next.config.js`.
 
-### `npm run eject`
+## Deploying to Vercel (Hobby Plan)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+1. Push this `client/` folder to a Git repository (or set the root directory to `client/` in Vercel).
+2. In the Vercel dashboard, add the environment variable `NEXT_PUBLIC_API_URL` pointing to your backend server.
+3. Vercel will auto-detect Next.js and deploy.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Important Notes for Vercel Hobby Plan
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- All pages are **client-side rendered** (`"use client"`) — no serverless function compute needed.
+- API calls are proxied via Next.js `rewrites` to the external backend.
+- No server-side data fetching or ISR is used, keeping within hobby plan limits.
+- The `uploads/` static files are served from the backend server through rewrites.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Project Structure
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── layout.tsx          # Root layout (providers, nav, admin FAB)
+│   ├── page.tsx            # Home — product grid
+│   ├── globals.css         # Global styles + Tailwind
+│   ├── login/page.tsx      # Login / Signup
+│   ├── settings/page.tsx   # User settings, notifications, Discord
+│   ├── product/
+│   │   └── [productId]/page.tsx  # Product detail + price chart
+│   └── admin/
+│       ├── products/new/page.tsx        # Create product
+│       ├── products/import/page.tsx     # Import product
+│       ├── products/[productId]/page.tsx # Edit product
+│       ├── scraper-log/page.tsx         # Scraper logs
+│       ├── images/new/page.tsx          # Upload image
+│       └── images/manage/page.tsx       # Manage images
+├── components/
+│   ├── nav/nav-bar.tsx     # Top navigation bar
+│   ├── admin/admin-popup.tsx # Admin floating action menu
+│   ├── product/
+│   │   ├── product-grid.tsx
+│   │   ├── product-card.tsx
+│   │   └── price-chart.tsx
+│   └── ui/
+│       ├── btn.tsx         # Reusable button
+│       ├── input.tsx       # Reusable input + textarea
+│       └── page-shell.tsx  # Page wrapper with title
+└── lib/
+    ├── api.ts              # All API helper functions
+    ├── auth.tsx            # Auth context provider
+    └── types.ts            # Shared TypeScript types
+```
