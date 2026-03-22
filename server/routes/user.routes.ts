@@ -6,8 +6,6 @@ import {
   get_user_details,
   is_account_admin,
   login,
-  logout,
-  refresh_token,
   update_email,
   update_password,
 } from "../controller/user.controller";
@@ -26,10 +24,6 @@ export const userRouter: Router = Router();
 // Auth endpoints with rate limiting and validation
 userRouter.post("/signup", authRateLimiter, validate(signupSchema), create_account);
 userRouter.post("/login", authRateLimiter, validate(loginSchema), login);
-userRouter.post("/logout", logout);
-
-// Token refresh — no auth middleware (access token may be expired)
-userRouter.post("/refresh", refresh_token);
 
 // Password change with validation
 userRouter.patch(

@@ -66,7 +66,7 @@ app.use(
     },
     credentials: true, // Required for cookies
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

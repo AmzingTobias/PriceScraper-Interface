@@ -19,54 +19,28 @@ import {
 
 // ── Auth-aware fetch wrapper ──
 
-let isRefreshing = false;
-let refreshPromise: Promise<boolean> | null = null;
-
 /**
- * Attempt to refresh the access token using the refresh token cookie.
- * Returns true if refresh succeeded, false otherwise.
- * Deduplicates concurrent refresh attempts.
+ * Get the current auth token from localStorage.
+ * Returns empty string if no token or expired.
  */
-async function refreshAccessToken(): Promise<boolean> {
-  if (isRefreshing && refreshPromise) return refreshPromise;
-
-  isRefreshing = true;
-  refreshPromise = (async () => {
-    try {
-      const res = await fetch("/api/auth/refresh", {
-        method: "POST",
-        credentials: "include",
-      });
-      return res.ok;
-    } catch {
-      return false;
-    } finally {
-      isRefreshing = false;
-      refreshPromise = null;
-    }
-  })();
-
-  return refreshPromise;
+function getToken(): string {
+  try {
+    return localStorage.getItem("ps-auth-token") || "";
+  } catch {
+    return "";
+  }
 }
 
 /**
- * Fetch wrapper that automatically retries on 401 by refreshing
- * the access token first. All authenticated API calls should use this.
+ * Fetch wrapper that attaches the Bearer token to authenticated requests.
  */
 async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  const opts: RequestInit = { ...init, credentials: "include" };
-  let res = await fetch(input, opts);
-
-  // If we got a 401, try refreshing the access token via the refresh cookie
-  if (res.status === 401) {
-    const refreshed = await refreshAccessToken();
-    if (refreshed) {
-      // Retry the original request with the new access token cookie
-      res = await fetch(input, opts);
-    }
+  const token = getToken();
+  const headers = new Headers(init?.headers);
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
-
-  return res;
+  return fetch(input, { ...init, headers });
 }
 
 // ── Products ──
@@ -184,8 +158,7 @@ export async function fetchProductImage(productId: string): Promise<tImageEntry 
 export async function fetchImageById(imageId: string | number): Promise<tImageEntry | null> {
   const res = await fetch(`/api/images/${imageId}`);
   if (!res.ok) return null;
-  const data = await res.json();
-  return data;
+  return res.json();
 }
 
 export async function fetchAllImages(): Promise<tImageEntry[]> {
@@ -221,43 +194,41 @@ export async function linkImageToProduct(productId: string | number, imageId: nu
 
 // ── Users / Auth ──
 
-export async function login(username: string, password: string): Promise<boolean> {
-  const res = await fetch("/api/auth/login", {
+export async function login(username: string, password: string): Promise<string | null> {
+  const res = await fetch("/api/users/login", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ username, password }),
-    credentials: "include",
   });
-  return res.ok;
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.token ?? null;
 }
 
-export async function signup(username: string, password: string): Promise<boolean> {
-  const res = await fetch("/api/auth/signup", {
+export async function signup(username: string, password: string): Promise<string | null> {
+  const res = await fetch("/api/users/signup", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ username, password }),
-    credentials: "include",
   });
-  return res.ok;
-}
-
-export async function logout(): Promise<void> {
-  await fetch("/api/auth/logout", {
-    method: "POST",
-    credentials: "include",
-  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.token ?? null;
 }
 
 export async function isUserAdmin(): Promise<boolean> {
-  const res = await authFetch("/api/users/admin", { credentials: "include" });
-  if (res.status === 401) throw new Error("Not authenticated");
-  if (!res.ok) return false;
-  return res.json();
+  try {
+    const res = await authFetch("/api/users/admin");
+    if (!res.ok) return false;
+    return res.json();
+  } catch {
+    return false;
+  }
 }
 
 export async function getUserDetails(): Promise<TUserDetails | null> {
   try {
-    const res = await authFetch("/api/users", { credentials: "include" });
+    const res = await authFetch("/api/users");
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -394,8 +365,6 @@ export async function importProduct(importLink: string): Promise<string | null> 
     body: JSON.stringify({ import_link: importLink }),
   });
   if (res.ok) {
-    // The import runs async on the server, but invalidate caches
-    // so the next home page load picks up any new products
     cacheDelete(CacheKeys.allProducts());
     cacheDelete(CacheKeys.productCards());
     return res.text();

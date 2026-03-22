@@ -2,9 +2,7 @@ import { Request, Response } from "express";
 import {
   compare_hashed_password,
   hashPassword,
-  setAuthCookies,
-  clearAuthCookies,
-  verifyRefreshToken,
+  signToken,
 } from "../common/security";
 import {
   BAD_REQUEST_CODE,
@@ -17,7 +15,6 @@ import {
   createUser,
   getEmailForUserWithId,
   getUserDetails,
-  getUserWithId,
   getUserWithUsername,
   isUserAdmin,
   updateUserEmail,
@@ -25,7 +22,7 @@ import {
 } from "../models/user.models";
 
 /**
- * Create a user account. Sets httpOnly access + refresh cookies.
+ * Create a user account. Returns a JWT token in the response body.
  */
 export const create_account = async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -46,8 +43,8 @@ export const create_account = async (req: Request, res: Response) => {
       return;
     }
 
-    setAuthCookies(res, user.Id);
-    res.status(201).json({ success: true });
+    const token = signToken(user.Id);
+    res.status(201).json({ token });
   } catch (err) {
     console.error(err);
     res.status(INTERNAL_SERVER_ERROR_CODE).json({ error: "Database error" });
@@ -82,9 +79,9 @@ export const update_password = async (req: Request, res: Response) => {
     const updated = await updateUserPassword(req.user.Id, hashed);
 
     if (updated) {
-      // Issue new tokens after password change (invalidates old sessions implicitly when they expire)
-      setAuthCookies(res, req.user.Id);
-      res.send("Password updated");
+      // Issue a fresh token after password change
+      const token = signToken(req.user.Id);
+      res.json({ message: "Password updated", token });
     } else {
       res.status(INTERNAL_SERVER_ERROR_CODE).send("Failed to update password");
     }
@@ -95,7 +92,7 @@ export const update_password = async (req: Request, res: Response) => {
 };
 
 /**
- * Login. Sets httpOnly access + refresh cookies.
+ * Login. Returns a JWT token in the response body.
  */
 export const login = async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -114,57 +111,11 @@ export const login = async (req: Request, res: Response) => {
       return;
     }
 
-    setAuthCookies(res, user.Id);
-    res.status(200).json({ success: true });
+    const token = signToken(user.Id);
+    res.status(200).json({ token });
   } catch (err) {
     console.error(err);
     res.status(INTERNAL_SERVER_ERROR_CODE).json({ error: "Server error" });
-  }
-};
-
-/**
- * Logout. Clears both auth cookies.
- */
-export const logout = async (_req: Request, res: Response) => {
-  clearAuthCookies(res);
-  res.status(200).json({ message: "Logged out" });
-};
-
-/**
- * Refresh the access token using the refresh token cookie.
- * Issues a new access token (and rotates the refresh token for security).
- */
-export const refresh_token = async (req: Request, res: Response) => {
-  const refreshCookie = req.cookies["refresh-token"] as string | undefined;
-
-  if (!refreshCookie) {
-    res.status(401).json({ error: "No refresh token" });
-    return;
-  }
-
-  try {
-    const userId = await verifyRefreshToken(refreshCookie);
-    if (userId === null) {
-      clearAuthCookies(res);
-      res.status(401).json({ error: "Invalid refresh token" });
-      return;
-    }
-
-    // Verify the user still exists
-    const user = await getUserWithId(userId);
-    if (!user) {
-      clearAuthCookies(res);
-      res.status(401).json({ error: "User not found" });
-      return;
-    }
-
-    // Issue new access + refresh tokens (rotation)
-    setAuthCookies(res, userId);
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.error(err);
-    clearAuthCookies(res);
-    res.status(401).json({ error: "Refresh failed" });
   }
 };
 

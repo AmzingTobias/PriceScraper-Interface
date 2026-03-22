@@ -4,13 +4,9 @@ import { NextFunction, Request, Response } from "express";
 import { tUserAccount } from "./user";
 import { getUserWithId, isUserAdmin } from "../models/user.models";
 
-// ── Token lifetimes ──
+// ── Token lifetime ──
 
-const ACCESS_TOKEN_EXPIRY = "15m";
-const ACCESS_COOKIE_MAX_AGE = 15 * 60 * 1000; // 15 minutes
-
-const REFRESH_TOKEN_EXPIRY = "7d";
-const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+const TOKEN_EXPIRY = "7d";
 
 // ── Secrets ──
 
@@ -20,11 +16,6 @@ function getApiSecret(): string {
     throw new Error("API_SECRET must be set and at least 16 characters long");
   }
   return secret;
-}
-
-/** Refresh tokens use a separate secret derived from the main one */
-function getRefreshSecret(): string {
-  return getApiSecret() + "_refresh";
 }
 
 // ── Password hashing ──
@@ -43,66 +34,17 @@ export const compare_hashed_password = async (
 
 // ── Token signing ──
 
-/** Sign a short-lived access token (15 minutes) */
-export function signAccessToken(userId: number): string {
-  return jwt.sign({ Id: userId, type: "access" }, getApiSecret(), {
-    expiresIn: ACCESS_TOKEN_EXPIRY,
-  });
-}
-
-/** Sign a long-lived refresh token (7 days) */
-export function signRefreshToken(userId: number): string {
-  return jwt.sign({ Id: userId, type: "refresh" }, getRefreshSecret(), {
-    expiresIn: REFRESH_TOKEN_EXPIRY,
-  });
-}
-
-// ── Cookie management ──
-
-const isProduction = () => process.env.NODE_ENV === "production";
-
-/** Set both auth cookies: short-lived access + long-lived refresh */
-export function setAuthCookies(res: Response, userId: number): void {
-  const accessToken = signAccessToken(userId);
-  const refreshToken = signRefreshToken(userId);
-
-  res.cookie("auth-token", `JWT ${accessToken}`, {
-    httpOnly: true,
-    secure: isProduction(),
-    sameSite: "lax",
-    maxAge: ACCESS_COOKIE_MAX_AGE,
-    path: "/",
-  });
-
-  res.cookie("refresh-token", `JWT ${refreshToken}`, {
-    httpOnly: true,
-    secure: isProduction(),
-    sameSite: "lax",
-    maxAge: REFRESH_COOKIE_MAX_AGE,
-    path: "/api/users/refresh", // Only sent to the refresh endpoint
-  });
-}
-
-/** Clear both auth cookies */
-export function clearAuthCookies(res: Response): void {
-  res.clearCookie("auth-token", {
-    httpOnly: true,
-    secure: isProduction(),
-    sameSite: "lax",
-    path: "/",
-  });
-  res.clearCookie("refresh-token", {
-    httpOnly: true,
-    secure: isProduction(),
-    sameSite: "lax",
-    path: "/api/users/refresh",
+/** Sign a JWT token for a user (7 days) */
+export function signToken(userId: number): string {
+  return jwt.sign({ Id: userId }, getApiSecret(), {
+    expiresIn: TOKEN_EXPIRY,
   });
 }
 
 // ── Middleware ──
 
 /**
- * Verify the access token from the auth-token cookie.
+ * Verify JWT from the Authorization header (Bearer token) or auth-token cookie.
  * Sets req.user on success, returns 401 on failure.
  */
 export const verify_token = (
@@ -110,35 +52,36 @@ export const verify_token = (
   res: Response,
   next: NextFunction
 ) => {
-  const cookie = req.cookies["auth-token"] as string | undefined;
+  let token: string | undefined;
 
-  if (!cookie || !cookie.startsWith("JWT ")) {
+  // Check Authorization header first (Bearer token)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.slice(7);
+  }
+
+  // Fall back to cookie (legacy support)
+  if (!token) {
+    const cookie = req.cookies["auth-token"] as string | undefined;
+    if (cookie && cookie.startsWith("JWT ")) {
+      token = cookie.split(" ")[1];
+    }
+  }
+
+  if (!token) {
     req.user = undefined;
     res.status(401).json({ error: "No token provided" });
     return;
   }
 
-  const token = cookie.split(" ")[1];
-
   jwt.verify(token, getApiSecret(), async function (err, decode) {
     if (err) {
       req.user = undefined;
-      // Distinguish expired from invalid so the frontend knows to try refreshing
-      if (err.name === "TokenExpiredError") {
-        res.status(401).json({ error: "Token expired", code: "TOKEN_EXPIRED" });
-      } else {
-        res.status(401).json({ error: "Invalid token" });
-      }
+      res.status(401).json({ error: "Invalid or expired token" });
       return;
     }
     try {
-      const payload = decode as { Id: number; type?: string };
-      // Reject refresh tokens used as access tokens
-      if (payload.type === "refresh") {
-        req.user = undefined;
-        res.status(401).json({ error: "Invalid token type" });
-        return;
-      }
+      const payload = decode as { Id: number };
       const user = await getUserWithId(payload.Id);
       req.user = user;
       next();
@@ -148,35 +91,6 @@ export const verify_token = (
     }
   });
 };
-
-/**
- * Verify the refresh token from the refresh-token cookie.
- * Returns the user ID if valid, null otherwise.
- */
-export function verifyRefreshToken(refreshCookie: string): Promise<number | null> {
-  return new Promise((resolve) => {
-    if (!refreshCookie || !refreshCookie.startsWith("JWT ")) {
-      resolve(null);
-      return;
-    }
-
-    const token = refreshCookie.split(" ")[1];
-
-    jwt.verify(token, getRefreshSecret(), (err, decode) => {
-      if (err) {
-        resolve(null);
-        return;
-      }
-      const payload = decode as { Id: number; type?: string };
-      // Must be a refresh token, not an access token
-      if (payload.type !== "refresh") {
-        resolve(null);
-        return;
-      }
-      resolve(payload.Id);
-    });
-  });
-}
 
 /**
  * Middleware: verify the authenticated user is an admin.

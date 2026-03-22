@@ -1,75 +1,128 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { isUserAdmin as checkIsAdmin, logout as apiLogout } from "./api";
+import { isUserAdmin as checkIsAdmin } from "./api";
 
+const TOKEN_KEY = "ps-auth-token";
 const FILTER_SESSION_KEY = "ps-show-notified-only";
-const AUTH_SESSION_KEY = "ps-is-logged-in";
 
 interface AuthContextType {
+  token: string;
   isAdmin: boolean;
   isLoggedIn: boolean;
   mounted: boolean;
   showNotifiedOnly: boolean;
   setShowNotifiedOnly: (val: boolean) => void;
-  /** Call after a successful login/signup API response */
-  onLoginSuccess: () => void;
+  setToken: (token: string) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
+  token: "",
   isAdmin: false,
   isLoggedIn: false,
   mounted: false,
   showNotifiedOnly: false,
   setShowNotifiedOnly: () => {},
-  onLoginSuccess: () => {},
+  setToken: () => {},
   logout: () => {},
 });
 
+/**
+ * Decode the JWT payload without any external library.
+ * Returns null if the token is malformed.
+ */
+function decodePayload(token: string): { exp?: number; Id?: number } | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/** Check if a JWT token is still valid (not expired) */
+function isTokenValid(token: string): boolean {
+  if (!token) return false;
+  const payload = decodePayload(token);
+  if (!payload || !payload.exp) return false;
+  // Add 10 second buffer to avoid edge-case race conditions
+  return payload.exp > Date.now() / 1000 + 10;
+}
+
+/** Read token from localStorage, clear it if expired */
+function readStoredToken(): string {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return "";
+    if (isTokenValid(token)) return token;
+    // Token expired — clean up
+    localStorage.removeItem(TOKEN_KEY);
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+/** Store token in localStorage */
+function storeToken(token: string): void {
+  try {
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  } catch {
+    // localStorage may not be available
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setTokenState] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [showNotifiedOnly, setShowNotifiedOnlyState] = useState(false);
 
-  // On mount: check if user has an active session by calling the API.
-  // The browser sends the httpOnly cookie automatically.
-  // We also use sessionStorage as a fast hint to avoid a flash.
+  // On mount: read token from localStorage and restore filter state
   useEffect(() => {
-    // Restore filter state
+    const stored = readStoredToken();
+    if (stored) setTokenState(stored);
+
     try {
       const saved = sessionStorage.getItem(FILTER_SESSION_KEY);
       if (saved === "true") setShowNotifiedOnlyState(true);
     } catch {}
 
-    // Check if we had a session (fast hint)
-    let hadSession = false;
-    try {
-      hadSession = sessionStorage.getItem(AUTH_SESSION_KEY) === "true";
-    } catch {}
-
-    if (hadSession) {
-      // Optimistically mark as logged in, then verify
-      setIsLoggedIn(true);
-    }
-
-    // Verify auth status by hitting an authenticated endpoint
-    checkIsAdmin()
-      .then((admin) => {
-        // If we got a response (not a 401), the cookie is valid
-        setIsLoggedIn(true);
-        setIsAdmin(admin);
-        try { sessionStorage.setItem(AUTH_SESSION_KEY, "true"); } catch {}
-      })
-      .catch(() => {
-        // 401 or network error — not logged in
-        setIsLoggedIn(false);
-        setIsAdmin(false);
-        try { sessionStorage.removeItem(AUTH_SESSION_KEY); } catch {}
-      })
-      .finally(() => setMounted(true));
+    setMounted(true);
   }, []);
+
+  // Check admin status whenever token changes
+  useEffect(() => {
+    if (token) {
+      checkIsAdmin()
+        .then(setIsAdmin)
+        .catch(() => setIsAdmin(false));
+    } else {
+      setIsAdmin(false);
+    }
+  }, [token]);
+
+  // Periodically check token expiry (every 60 seconds)
+  useEffect(() => {
+    if (!token) return;
+
+    const interval = setInterval(() => {
+      if (!isTokenValid(token)) {
+        setTokenState("");
+        storeToken("");
+        setIsAdmin(false);
+      }
+    }, 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [token]);
 
   const setShowNotifiedOnly = useCallback((val: boolean) => {
     setShowNotifiedOnlyState(val);
@@ -78,43 +131,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, []);
 
-  /**
-   * Called after a successful login or signup API response.
-   * The backend has already set the httpOnly cookie via Set-Cookie header.
-   * We just need to update local state.
-   */
-  const onLoginSuccess = useCallback(() => {
-    setIsLoggedIn(true);
-    try { sessionStorage.setItem(AUTH_SESSION_KEY, "true"); } catch {}
-    // Check admin status
-    checkIsAdmin()
-      .then(setIsAdmin)
-      .catch(() => setIsAdmin(false));
+  const setToken = useCallback((newToken: string) => {
+    if (newToken && !isTokenValid(newToken)) {
+      newToken = "";
+    }
+    setTokenState(newToken);
+    storeToken(newToken);
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await apiLogout();
-    } catch {
-      // Even if the API call fails, clear local state
-    }
-    setIsLoggedIn(false);
+  const logout = useCallback(() => {
+    setToken("");
     setIsAdmin(false);
     setShowNotifiedOnly(false);
-    try {
-      sessionStorage.removeItem(AUTH_SESSION_KEY);
-    } catch {}
-  }, [setShowNotifiedOnly]);
+  }, [setToken, setShowNotifiedOnly]);
 
   return (
     <AuthContext.Provider
       value={{
+        token,
         isAdmin,
-        isLoggedIn,
+        isLoggedIn: token !== "",
         mounted,
         showNotifiedOnly,
         setShowNotifiedOnly,
-        onLoginSuccess,
+        setToken,
         logout,
       }}
     >
