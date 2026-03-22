@@ -277,7 +277,7 @@ export const getUserDetails = (
         reject(err);
       } else {
         if (row === undefined) {
-          reject(null);
+          reject(new Error("User not found"));
         } else {
           resolve(row as TUserDetails);
         }

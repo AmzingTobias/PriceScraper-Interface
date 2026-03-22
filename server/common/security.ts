@@ -108,5 +108,5 @@ export const verify_token_is_admin = async (
       return;
     }
   }
-  res.status(401).json({ error: "Unauthorized" });
+  res.status(403).json({ error: "Forbidden" });
 };

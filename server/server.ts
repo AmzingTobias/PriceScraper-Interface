@@ -42,6 +42,10 @@ getScraperConnection();
 const app: Express = express();
 const port: number = Number(process.env.PORT) || 5000;
 
+// Trust the first proxy hop (Nginx/reverse proxy on VPS) so that
+// express-rate-limit reads the real client IP from X-Forwarded-For
+app.set("trust proxy", 1);
+
 // Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded cross-origin

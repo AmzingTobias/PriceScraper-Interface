@@ -75,7 +75,7 @@ export const get_sites = async (req: Request, res: Response) => {
   } else if (typeof product_id === "string") {
     get_all_sites_for_product(req, res, product_id as string);
   } else {
-    res.status(BAD_REQUEST_CODE);
+    res.status(BAD_REQUEST_CODE).send("Invalid ProductId");
   }
 };
 

@@ -17,6 +17,12 @@ import path from "path";
 import { Request } from "express";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ALLOWED_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+};
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const storage = multer.diskStorage({
@@ -24,8 +30,8 @@ const storage = multer.diskStorage({
     cb(null, path.join(__dirname, "../uploads"));
   },
   filename: function (_req, file, cb) {
-    const filename = uuidv4();
-    cb(null, filename + path.extname(file.originalname));
+    const ext = ALLOWED_EXTENSIONS[file.mimetype] ?? ".jpg";
+    cb(null, uuidv4() + ext);
   },
 });
 
@@ -48,8 +54,9 @@ export const imageRouter = Router();
 // Get all images
 imageRouter.get("/", verify_token, get_all_images);
 
-// Get an image by Id
-imageRouter.get("/:id", verify_token, get_image_with_id);
+// Get the image for a product (public — no auth required for product pages)
+// Must be registered BEFORE /:id to avoid being shadowed by that wildcard
+imageRouter.get("/product/:productId", get_image_for_product);
 
 // Upload a new image (admin only)
 imageRouter.post(
@@ -60,8 +67,8 @@ imageRouter.post(
   add_image
 );
 
-// Get the image for a product (public — no auth required for product pages)
-imageRouter.get("/product/:productId", get_image_for_product);
+// Get an image by Id
+imageRouter.get("/:id", verify_token, get_image_with_id);
 
 // Remove the image link from a product
 imageRouter.delete("/product/:productId", verify_token, remove_image_from_product);

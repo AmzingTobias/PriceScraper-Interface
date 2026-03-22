@@ -28,12 +28,29 @@ function validateImportLink(link: string): string | null {
 
     // Block localhost/private networks (to prevent SSRF)
     const hostname = url.hostname.toLowerCase();
+
+    // Strip IPv6 brackets for matching (e.g. [::1] -> ::1)
+    const host = hostname.startsWith("[") && hostname.endsWith("]")
+      ? hostname.slice(1, -1)
+      : hostname;
+
     if (
-      hostname === "localhost" ||
-      hostname.startsWith("127.") ||
-      hostname.startsWith("10.") ||
-      hostname.startsWith("192.168.") ||
-      hostname.endsWith(".local")
+      host === "localhost" ||
+      host === "0.0.0.0" ||
+      // IPv6 loopback
+      host === "::1" ||
+      host === "0:0:0:0:0:0:0:1" ||
+      // 127.0.0.0/8
+      host.startsWith("127.") ||
+      // 10.0.0.0/8
+      host.startsWith("10.") ||
+      // 172.16.0.0/12 (172.16.x.x – 172.31.x.x)
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      // 192.168.0.0/16
+      host.startsWith("192.168.") ||
+      // 169.254.0.0/16 (link-local / cloud metadata service)
+      host.startsWith("169.254.") ||
+      host.endsWith(".local")
     ) {
       return null;
     }

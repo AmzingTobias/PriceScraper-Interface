@@ -61,9 +61,12 @@ export const remove_image = async (req: Request, res: Response) => {
         .send("Image Id missing from request");
     } else {
       getImageWithId(String(image_id)).then((imageToDelete) => {
-        if (imageToDelete !== null) {
-          const filepath = path.join(__dirname, "../", imageToDelete.Link);
-          fs.unlink(filepath, (err) => {
+        if (imageToDelete === null) {
+          res.status(BAD_REQUEST_CODE).send("Image does not exist");
+          return;
+        }
+        const filepath = path.join(__dirname, "../uploads/", imageToDelete.Link);
+        fs.unlink(filepath, (err) => {
             if (err) {
               console.error(err);
               res
@@ -88,7 +91,6 @@ export const remove_image = async (req: Request, res: Response) => {
                 });
             }
           });
-        }
       });
     }
   } else {
