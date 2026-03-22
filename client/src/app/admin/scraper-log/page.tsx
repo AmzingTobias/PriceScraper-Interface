@@ -46,7 +46,7 @@ export default function ScraperLogPage() {
         ) : logs.length === 0 ? (
           <p className="text-text-muted text-center py-8">No log entries.</p>
         ) : (
-          logs.map((line, i) => (
+          [...logs].reverse().map((line, i) => (
             <div
               key={i}
               className={`py-0.5 ${
