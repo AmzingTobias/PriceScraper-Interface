@@ -1,5 +1,5 @@
-import { spawn, ChildProcess } from 'child_process';
-import { get_today_date_as_string_with_time } from './date';
+import { spawn, ChildProcess } from "child_process";
+import { get_today_date_as_string_with_time } from "./date";
 
 let instance: PriceScraperConnection | undefined = undefined;
 const PROGRAM_LOGS_MAX_SIZE = 1000;
@@ -19,16 +19,14 @@ class PriceScraperConnection {
   }
 
   importSiteToScraper(import_link: string) {
-    if (
-      process.env.SCRAPER_PATH &&
-      process.env.SCRAPER_CONFIG_PATH
-    ) {
+    if (process.env.SCRAPER_PATH && process.env.SCRAPER_CONFIG_PATH) {
       console.log("INFO: Starting scraper in import mode");
 
-      const import_process = spawn(process.env.SCRAPER_PATH, [
-        "import",
-        import_link
-      ], { env: { PRICESCRAPER_CONFIG_PATH: process.env.SCRAPER_CONFIG_PATH } });
+      const import_process = spawn(
+        process.env.SCRAPER_PATH,
+        ["import", import_link],
+        { env: { PRICESCRAPER_CONFIG_PATH: process.env.SCRAPER_CONFIG_PATH } },
+      );
 
       import_process.stdout?.on("data", (data: Buffer) => {
         this.addToLogs(data.toString());
@@ -42,23 +40,21 @@ class PriceScraperConnection {
       import_process.on("close", (code) => {
         this.addToLogs(`INFO: Scraper import exited with code ${code}`);
       });
-    }
-    else {
+    } else {
       console.error("Missing required environment variables.");
-      this.addToLogs("ERROR: Scraper import could not start: missing env vars.");
+      this.addToLogs(
+        "ERROR: Scraper import could not start: missing env vars.",
+      );
     }
   }
 
   private startScraperProcess() {
-    if (
-      process.env.SCRAPER_PATH &&
-      process.env.SCRAPER_CONFIG_PATH
-    ) {
+    if (process.env.SCRAPER_PATH && process.env.SCRAPER_CONFIG_PATH) {
       console.log("INFO: Spawning scraper task...");
 
-      this.scraperProcess = spawn(process.env.SCRAPER_PATH, [
-        "scrape",
-      ], { env: { PRICESCRAPER_CONFIG_PATH: process.env.SCRAPER_CONFIG_PATH } });
+      this.scraperProcess = spawn(process.env.SCRAPER_PATH, ["scrape"], {
+        env: { PRICESCRAPER_CONFIG_PATH: process.env.SCRAPER_CONFIG_PATH },
+      });
 
       // Listen for stdout and stderr
       this.scraperProcess.stdout?.on("data", (data: Buffer) => {
@@ -76,9 +72,12 @@ class PriceScraperConnection {
 
         this.addToLogs("INFO: Restarting scraper after 30-minute delay...");
         // Wait 30 minutes before restarting
-        setTimeout(() => {
-          this.startScraperProcess();
-        }, 30 * 60 * 1000);
+        setTimeout(
+          () => {
+            this.startScraperProcess();
+          },
+          30 * 60 * 1000,
+        );
       });
 
       // Handle errors
@@ -97,7 +96,7 @@ class PriceScraperConnection {
     }
     try {
       this.programLogs.push(
-        `${get_today_date_as_string_with_time()} ${data.trim()}`
+        `${get_today_date_as_string_with_time()} ${data.trim()}`,
       );
     } catch {
       // Optional: handle bad data
