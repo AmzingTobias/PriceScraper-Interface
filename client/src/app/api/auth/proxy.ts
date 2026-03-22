@@ -1,11 +1,13 @@
 /**
- * Proxy an auth request to the backend and forward Set-Cookie headers back.
+ * Proxy auth requests to the backend and re-set cookies from the Vercel domain.
  *
- * Vercel's rewrite proxy strips Set-Cookie headers from upstream responses,
- * so auth endpoints that set httpOnly cookies must go through these Route
- * Handlers instead of the rewrite. The Route Handler runs server-side on
- * Vercel, calls the backend directly, and copies the Set-Cookie headers
- * into the response it sends to the browser.
+ * Vercel's rewrite proxy strips Set-Cookie headers from upstream responses.
+ * These Route Handlers call the backend directly, parse the Set-Cookie
+ * headers from the response, and re-set the cookies using NextResponse
+ * so they're properly scoped to the frontend domain.
+ *
+ * The refresh token path is rewritten from the backend's /api/users/refresh
+ * to the frontend's /api/auth/refresh.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -18,13 +20,43 @@ function getBackendUrl(): string {
   );
 }
 
+/** Parse a Set-Cookie header string into name, value, and attributes */
+function parseSetCookie(header: string): {
+  name: string;
+  value: string;
+  attributes: Record<string, string | true>;
+} | null {
+  const parts = header.split(";").map((s) => s.trim());
+  if (parts.length === 0) return null;
+
+  const [first, ...rest] = parts;
+  const eqIndex = first.indexOf("=");
+  if (eqIndex === -1) return null;
+
+  const name = first.substring(0, eqIndex).trim();
+  const value = first.substring(eqIndex + 1).trim();
+
+  const attributes: Record<string, string | true> = {};
+  for (const part of rest) {
+    const attrEq = part.indexOf("=");
+    if (attrEq === -1) {
+      attributes[part.toLowerCase()] = true;
+    } else {
+      attributes[part.substring(0, attrEq).trim().toLowerCase()] = part
+        .substring(attrEq + 1)
+        .trim();
+    }
+  }
+
+  return { name, value, attributes };
+}
+
 export async function proxyAuthRequest(
   req: NextRequest,
   backendPath: string
 ): Promise<NextResponse> {
   const backendUrl = `${getBackendUrl()}${backendPath}`;
 
-  // Forward the request body and cookies to the backend
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
@@ -39,7 +71,7 @@ export async function proxyAuthRequest(
   try {
     body = await req.text();
   } catch {
-    // No body (e.g. logout)
+    // No body
   }
 
   const backendRes = await fetch(backendUrl, {
@@ -48,21 +80,50 @@ export async function proxyAuthRequest(
     body: body || undefined,
   });
 
-  // Read the backend response body
   const responseBody = await backendRes.text();
 
-  // Build the Next.js response
   const res = new NextResponse(responseBody, {
     status: backendRes.status,
     headers: {
-      "Content-Type": backendRes.headers.get("Content-Type") || "application/json",
+      "Content-Type":
+        backendRes.headers.get("Content-Type") || "application/json",
     },
   });
 
-  // Forward ALL Set-Cookie headers from the backend to the browser
+  // Parse and re-set cookies from the backend
   const setCookies = backendRes.headers.getSetCookie();
-  for (const cookie of setCookies) {
-    res.headers.append("Set-Cookie", cookie);
+  for (const rawCookie of setCookies) {
+    const parsed = parseSetCookie(rawCookie);
+    if (!parsed) continue;
+
+    const { name, value, attributes } = parsed;
+
+    // Rewrite the refresh token path from backend to frontend
+    let path = typeof attributes["path"] === "string" ? attributes["path"] : "/";
+    if (path === "/api/users/refresh") {
+      path = "/api/auth/refresh";
+    }
+
+    const cookieOptions: string[] = [`${name}=${value}`];
+    cookieOptions.push(`Path=${path}`);
+
+    if (attributes["max-age"]) {
+      cookieOptions.push(`Max-Age=${attributes["max-age"]}`);
+    }
+    if (attributes["httponly"]) {
+      cookieOptions.push("HttpOnly");
+    }
+    if (attributes["secure"]) {
+      cookieOptions.push("Secure");
+    }
+    if (attributes["samesite"]) {
+      cookieOptions.push(
+        `SameSite=${typeof attributes["samesite"] === "string" ? attributes["samesite"] : "Lax"}`
+      );
+    }
+
+    // Explicitly do NOT forward Domain — let the browser scope it to the current origin
+    res.headers.append("Set-Cookie", cookieOptions.join("; "));
   }
 
   return res;
