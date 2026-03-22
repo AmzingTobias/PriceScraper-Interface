@@ -1,4 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
+import path from "path";
 import { get_today_date_as_string_with_time } from "./date";
 
 let instance: PriceScraperConnection | undefined = undefined;
@@ -25,7 +26,10 @@ class PriceScraperConnection {
       const import_process = spawn(
         process.env.SCRAPER_PATH,
         ["import", import_link],
-        { env: { PRICESCRAPER_CONFIG_PATH: process.env.SCRAPER_CONFIG_PATH } },
+        {
+          cwd: path.dirname(process.env.SCRAPER_PATH),
+          env: { PRICESCRAPER_CONFIG_PATH: process.env.SCRAPER_CONFIG_PATH },
+        },
       );
 
       import_process.stdout?.on("data", (data: Buffer) => {
@@ -53,6 +57,7 @@ class PriceScraperConnection {
       console.log("INFO: Spawning scraper task...");
 
       this.scraperProcess = spawn(process.env.SCRAPER_PATH, ["scrape"], {
+        cwd: path.dirname(process.env.SCRAPER_PATH),
         env: { PRICESCRAPER_CONFIG_PATH: process.env.SCRAPER_CONFIG_PATH },
       });
 
