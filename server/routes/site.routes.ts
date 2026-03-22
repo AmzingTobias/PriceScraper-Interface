@@ -7,20 +7,22 @@ import {
   rename_site,
 } from "../controller/site.controller";
 import { verify_token } from "../common/security";
+import { validate } from "../middleware/validate";
+import { createSiteSchema, renameSiteSchema } from "../common/validation";
 
 export const siteRouter: Router = Router();
 
-// Used for getting either all sites, or all sites for a given product
+// Get all sites, or sites for a specific product
 siteRouter.get("/", verify_token, get_sites);
 
-// Create a new site link to a product
-siteRouter.post("/", verify_token, add_site);
+// Create a new site link
+siteRouter.post("/", verify_token, validate(createSiteSchema), add_site);
 
-// Get a specific site using a site Id
+// Get a specific site
 siteRouter.get("/:site_id", verify_token, get_site_with_id);
 
-// Delete a site link to a product, using a site Id
+// Delete a site link
 siteRouter.delete("/:site_id", verify_token, remove_site);
 
-// Rename a site link for an entry that already exists
-siteRouter.patch("/:site_id", verify_token, rename_site);
+// Rename a site link
+siteRouter.patch("/:site_id", verify_token, validate(renameSiteSchema), rename_site);

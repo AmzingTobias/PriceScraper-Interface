@@ -9,31 +9,49 @@ import {
   set_image_for_product,
 } from "../controller/image.controller";
 import { verify_token, verify_token_is_admin } from "../common/security";
-import { v4 as uuidv4 } from 'uuid';
-export const imageRouter = Router();
-
-import multer from "multer";
+import { validate } from "../middleware/validate";
+import { setImageForProductSchema } from "../common/validation";
+import { v4 as uuidv4 } from "uuid";
+import multer, { FileFilterCallback } from "multer";
 import path from "path";
+import { Request } from "express";
+
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function (_req, _file, cb) {
     cb(null, path.join(__dirname, "../uploads"));
   },
-  filename: function (req, file, cb) {
+  filename: function (_req, file, cb) {
     const filename = uuidv4();
-    cb(
-      null,
-      filename + path.extname(file.originalname)
-    );
+    cb(null, filename + path.extname(file.originalname));
   },
 });
-const upload = multer({ storage: storage });
-// Get all images from the database
+
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+  if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`Invalid file type. Allowed: ${ALLOWED_MIME_TYPES.join(", ")}`));
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: MAX_FILE_SIZE },
+});
+
+export const imageRouter = Router();
+
+// Get all images
 imageRouter.get("/", verify_token, get_all_images);
 
-// Get an image with Id
+// Get an image by Id
 imageRouter.get("/:id", verify_token, get_image_with_id);
 
-// Add a new image to the database
+// Upload a new image (admin only)
 imageRouter.post(
   "/",
   verify_token,
@@ -42,18 +60,19 @@ imageRouter.post(
   add_image
 );
 
-// Get an image for a given product
+// Get the image for a product (public — no auth required for product pages)
 imageRouter.get("/product/:productId", get_image_for_product);
 
-// Delete a link between a product and an image
-imageRouter.delete(
+// Remove the image link from a product
+imageRouter.delete("/product/:productId", verify_token, remove_image_from_product);
+
+// Set the image for a product
+imageRouter.patch(
   "/product/:productId",
   verify_token,
-  remove_image_from_product
+  validate(setImageForProductSchema),
+  set_image_for_product
 );
 
-// Set an image for a product
-imageRouter.patch("/product/:productId", verify_token, set_image_for_product);
-
-// Delete an image from the database
+// Delete an image
 imageRouter.delete("/:Id", verify_token, remove_image);

@@ -24,7 +24,7 @@ const WEBHOOK_REGEX = /^https:\/\/discord\.com\/api\/webhooks\//;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{7,}$/;
 
 export default function SettingsPage() {
-  const { isLoggedIn, logout, token, mounted } = useAuth();
+  const { isLoggedIn, logout, mounted } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -52,7 +52,7 @@ export default function SettingsPage() {
   }, [mounted, isLoggedIn, router]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!mounted || !isLoggedIn) return;
 
     setLoadingSettings(true);
 
@@ -75,7 +75,7 @@ export default function SettingsPage() {
         setWebhookLoaded(true);
       }),
     ]).finally(() => setLoadingSettings(false));
-  }, [token]);
+  }, [mounted, isLoggedIn]);
 
   const saveNotif = async () => {
     const ok = await updateNotificationSettings(notifEnabled);

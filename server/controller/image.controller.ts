@@ -60,7 +60,7 @@ export const remove_image = async (req: Request, res: Response) => {
         .status(INTERNAL_SERVER_ERROR_CODE)
         .send("Image Id missing from request");
     } else {
-      getImageWithId(image_id).then((imageToDelete) => {
+      getImageWithId(String(image_id)).then((imageToDelete) => {
         if (imageToDelete !== null) {
           const filepath = path.join(__dirname, "../", imageToDelete.Link);
           fs.unlink(filepath, (err) => {
@@ -78,7 +78,7 @@ export const remove_image = async (req: Request, res: Response) => {
                     res
                       .status(BAD_REQUEST_CODE)
                       .send(
-                        "Image could not be deleted, because it does not exist"
+                        "Image could not be deleted, because it does not exist",
                       );
                   }
                 })
@@ -137,7 +137,7 @@ export const set_image_for_product = async (req: Request, res: Response) => {
  */
 export const remove_image_from_product = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
     const { productId } = req.params;
@@ -217,7 +217,7 @@ export const get_all_images = async (req: Request, res: Response) => {
 export const get_image_with_id = async (req: Request, res: Response) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
     const { id } = req.params;
-    getImageWithId(id)
+    getImageWithId(String(id))
       .then((image) => {
         if (image === null) {
           res.status(BAD_REQUEST_CODE).send(null);

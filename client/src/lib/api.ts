@@ -17,6 +17,65 @@ import {
   TTL,
 } from "./cache";
 
+// ── Auth-aware fetch wrapper ──
+
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
+
+/**
+ * Attempt to refresh the access token using the refresh token cookie.
+ * Returns true if refresh succeeded, false otherwise.
+ * Deduplicates concurrent refresh attempts.
+ */
+async function refreshAccessToken(): Promise<boolean> {
+  if (isRefreshing && refreshPromise) return refreshPromise;
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch("/api/users/refresh", {
+        method: "POST",
+        credentials: "include",
+      });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+/**
+ * Fetch wrapper that automatically retries on 401 TOKEN_EXPIRED by refreshing
+ * the access token first. All authenticated API calls should use this.
+ */
+async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const opts: RequestInit = { ...init, credentials: "include" };
+  let res = await fetch(input, opts);
+
+  // If access token expired, try refreshing
+  if (res.status === 401) {
+    try {
+      const body = await res.clone().json();
+      if (body?.code === "TOKEN_EXPIRED") {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          // Retry the original request with the new access token
+          res = await fetch(input, opts);
+        }
+      }
+    } catch {
+      // Body wasn't JSON or other error — just return the original 401
+    }
+  }
+
+  return res;
+}
+
 // ── Products ──
 
 export async function fetchAllProducts(): Promise<tProductEntry[]> {
@@ -43,7 +102,7 @@ export async function fetchProductDetails(productId: string): Promise<tProductEn
 }
 
 export async function updateProductName(productId: string | number, name: string): Promise<boolean> {
-  const res = await fetch(`/api/products/name/${productId}`, {
+  const res = await authFetch(`/api/products/name/${productId}`, {
     method: "PATCH",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ name }),
@@ -57,7 +116,7 @@ export async function updateProductName(productId: string | number, name: string
 }
 
 export async function updateProductDescription(productId: string | number, description: string): Promise<boolean> {
-  const res = await fetch(`/api/products/description/${productId}`, {
+  const res = await authFetch(`/api/products/description/${productId}`, {
     method: "PATCH",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ description }),
@@ -69,7 +128,7 @@ export async function updateProductDescription(productId: string | number, descr
 }
 
 export async function deleteProduct(productId: string | number): Promise<boolean> {
-  const res = await fetch(`/api/products/${productId}`, { method: "DELETE" });
+  const res = await authFetch(`/api/products/${productId}`, { method: "DELETE" });
   if (res.ok) {
     cacheDelete(CacheKeys.productDetail(String(productId)));
     cacheDelete(CacheKeys.productPrices(String(productId)));
@@ -97,18 +156,18 @@ export async function fetchProductPrices(productId: string): Promise<tPriceEntry
 // ── Sites ──
 
 export async function fetchProductSites(productId: string): Promise<tSiteEntry[]> {
-  const res = await fetch(`/api/sites?ProductId=${productId}`);
+  const res = await authFetch(`/api/sites?ProductId=${productId}`);
   if (!res.ok) throw new Error("Failed to fetch sites");
   return res.json();
 }
 
 export async function deleteSite(siteId: number): Promise<boolean> {
-  const res = await fetch(`/api/sites/${siteId}`, { method: "DELETE" });
+  const res = await authFetch(`/api/sites/${siteId}`, { method: "DELETE" });
   return res.ok;
 }
 
 export async function createSite(link: string, productId: number): Promise<boolean> {
-  const res = await fetch("/api/sites", {
+  const res = await authFetch("/api/sites", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ "Site Link": link, ProductId: productId }),
@@ -137,7 +196,7 @@ export async function fetchImageById(imageId: string | number): Promise<tImageEn
 }
 
 export async function fetchAllImages(): Promise<tImageEntry[]> {
-  const res = await fetch("/api/images");
+  const res = await authFetch("/api/images");
   if (!res.ok) throw new Error("Failed to fetch images");
   return res.json();
 }
@@ -145,17 +204,17 @@ export async function fetchAllImages(): Promise<tImageEntry[]> {
 export async function uploadImage(file: File): Promise<boolean> {
   const formData = new FormData();
   formData.append("image", file);
-  const res = await fetch("/api/images/", { method: "POST", body: formData });
+  const res = await authFetch("/api/images/", { method: "POST", body: formData });
   return res.ok;
 }
 
 export async function deleteImage(imageId: number): Promise<boolean> {
-  const res = await fetch(`/api/images/${imageId}`, { method: "DELETE" });
+  const res = await authFetch(`/api/images/${imageId}`, { method: "DELETE" });
   return res.ok;
 }
 
 export async function linkImageToProduct(productId: string | number, imageId: number): Promise<boolean> {
-  const res = await fetch(`/api/images/product/${productId}`, {
+  const res = await authFetch(`/api/images/product/${productId}`, {
     method: "PATCH",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ ImageId: imageId }),
@@ -169,41 +228,43 @@ export async function linkImageToProduct(productId: string | number, imageId: nu
 
 // ── Users / Auth ──
 
-export async function login(username: string, password: string): Promise<string | null> {
+export async function login(username: string, password: string): Promise<boolean> {
   const res = await fetch("/api/users/login", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ username, password }),
+    credentials: "include",
   });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.token ?? null;
+  return res.ok;
 }
 
-export async function signup(username: string, password: string): Promise<string | null> {
+export async function signup(username: string, password: string): Promise<boolean> {
   const res = await fetch("/api/users/signup", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ username, password }),
+    credentials: "include",
   });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.token ?? null;
+  return res.ok;
+}
+
+export async function logout(): Promise<void> {
+  await fetch("/api/users/logout", {
+    method: "POST",
+    credentials: "include",
+  });
 }
 
 export async function isUserAdmin(): Promise<boolean> {
-  try {
-    const res = await fetch("/api/users/admin");
-    if (!res.ok) return false;
-    return res.json();
-  } catch {
-    return false;
-  }
+  const res = await authFetch("/api/users/admin", { credentials: "include" });
+  if (res.status === 401) throw new Error("Not authenticated");
+  if (!res.ok) return false;
+  return res.json();
 }
 
 export async function getUserDetails(): Promise<TUserDetails | null> {
   try {
-    const res = await fetch("/api/users");
+    const res = await authFetch("/api/users", { credentials: "include" });
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -215,7 +276,7 @@ export async function updatePassword(
   currentPassword: string,
   newPassword: string
 ): Promise<boolean> {
-  const res = await fetch("/api/users/change-password", {
+  const res = await authFetch("/api/users/change-password", {
     method: "PATCH",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({
@@ -230,7 +291,7 @@ export async function updatePassword(
 
 export async function isNotifiedForProduct(productId: string): Promise<boolean> {
   try {
-    const res = await fetch(`/api/notifications/product/${productId}`);
+    const res = await authFetch(`/api/notifications/product/${productId}`);
     if (!res.ok) return false;
     return res.json();
   } catch {
@@ -239,7 +300,7 @@ export async function isNotifiedForProduct(productId: string): Promise<boolean> 
 }
 
 export async function enableProductNotification(productId: number): Promise<boolean> {
-  const res = await fetch("/api/notifications/link", {
+  const res = await authFetch("/api/notifications/link", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ ProductId: productId }),
@@ -248,7 +309,7 @@ export async function enableProductNotification(productId: number): Promise<bool
 }
 
 export async function disableProductNotification(productId: number): Promise<boolean> {
-  const res = await fetch("/api/notifications/link", {
+  const res = await authFetch("/api/notifications/link", {
     method: "DELETE",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ ProductId: productId }),
@@ -258,7 +319,7 @@ export async function disableProductNotification(productId: number): Promise<boo
 
 export async function getNotifiedProducts(): Promise<TProductList> {
   try {
-    const res = await fetch("/api/notifications/user/product");
+    const res = await authFetch("/api/notifications/user/product");
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -268,7 +329,7 @@ export async function getNotifiedProducts(): Promise<TProductList> {
 
 export async function getNotificationSettings(): Promise<tUserNotificationSettings> {
   try {
-    const res = await fetch("/api/notifications/user");
+    const res = await authFetch("/api/notifications/user");
     if (!res.ok) return { Enabled: false };
     return res.json();
   } catch {
@@ -277,7 +338,7 @@ export async function getNotificationSettings(): Promise<tUserNotificationSettin
 }
 
 export async function updateNotificationSettings(enabled: boolean): Promise<boolean> {
-  const res = await fetch("/api/notifications/user", {
+  const res = await authFetch("/api/notifications/user", {
     method: "PATCH",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ Enable: enabled }),
@@ -289,7 +350,7 @@ export async function updateNotificationSettings(enabled: boolean): Promise<bool
 
 export async function getDiscordWebhook(): Promise<string | undefined> {
   try {
-    const res = await fetch("/api/notifications/discord");
+    const res = await authFetch("/api/notifications/discord");
     if (!res.ok) return undefined;
     const data = await res.json();
     return data.Webhook;
@@ -299,7 +360,7 @@ export async function getDiscordWebhook(): Promise<string | undefined> {
 }
 
 export async function createDiscordWebhook(webhook: string): Promise<boolean> {
-  const res = await fetch("/api/notifications/discord", {
+  const res = await authFetch("/api/notifications/discord", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ Webhook: webhook }),
@@ -308,7 +369,7 @@ export async function createDiscordWebhook(webhook: string): Promise<boolean> {
 }
 
 export async function updateDiscordWebhook(webhook: string): Promise<boolean> {
-  const res = await fetch("/api/notifications/discord", {
+  const res = await authFetch("/api/notifications/discord", {
     method: "PATCH",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ Webhook: webhook }),
@@ -317,7 +378,7 @@ export async function updateDiscordWebhook(webhook: string): Promise<boolean> {
 }
 
 export async function deleteDiscordWebhook(): Promise<boolean> {
-  const res = await fetch("/api/notifications/discord", { method: "DELETE" });
+  const res = await authFetch("/api/notifications/discord", { method: "DELETE" });
   return res.ok;
 }
 
@@ -325,7 +386,7 @@ export async function deleteDiscordWebhook(): Promise<boolean> {
 
 export async function getScraperLog(): Promise<string[]> {
   try {
-    const res = await fetch("/api/scraper/log");
+    const res = await authFetch("/api/scraper/log");
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -334,7 +395,7 @@ export async function getScraperLog(): Promise<string[]> {
 }
 
 export async function importProduct(importLink: string): Promise<string | null> {
-  const res = await fetch("/api/scraper/import", {
+  const res = await authFetch("/api/scraper/import", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ import_link: importLink }),

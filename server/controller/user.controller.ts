@@ -1,258 +1,278 @@
 import { Request, Response } from "express";
-import { compare_hashed_password, hashPassword } from "../common/security";
+import {
+  compare_hashed_password,
+  hashPassword,
+  setAuthCookies,
+  clearAuthCookies,
+  verifyRefreshToken,
+} from "../common/security";
 import {
   BAD_REQUEST_CODE,
   INTERNAL_SERVER_ERROR_CODE,
   UNAUTHORIZED_REQUEST_CODE,
 } from "../common/status_codes";
-import { USER_ID_MISSING_MSG, is_email_valid } from "../common/user";
+import { is_email_valid } from "../common/user";
 import {
   addEmailForUser,
   createUser,
   getEmailForUserWithId,
   getUserDetails,
+  getUserWithId,
   getUserWithUsername,
   isUserAdmin,
   updateUserEmail,
   updateUserPassword,
 } from "../models/user.models";
-import jwt from "jsonwebtoken";
 
 /**
- * Create a user account
- * @param req The request object, it should contain a username and password in the body
- * @param res The response object
+ * Create a user account. Sets httpOnly access + refresh cookies.
  */
 export const create_account = async (req: Request, res: Response) => {
   const { username, password } = req.body;
-  if (typeof username === "string" && typeof password !== "undefined") {
-    const username_lower = username.toLowerCase().trim();
+  const username_lower = username.toLowerCase().trim();
+
+  try {
     const hashed_password = await hashPassword(password);
-    createUser(username, hashed_password)
-      .then((created) => {
-        if (created) {
-          res.json(`User: ${username_lower} created`);
-        } else {
-          res.status(BAD_REQUEST_CODE).json(`User already exists`);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-      });
-  } else {
-    res.status(BAD_REQUEST_CODE).send("Missing request fields");
+    const created = await createUser(username_lower, hashed_password);
+
+    if (!created) {
+      res.status(BAD_REQUEST_CODE).json({ error: "User already exists" });
+      return;
+    }
+
+    const user = await getUserWithUsername(username_lower);
+    if (!user) {
+      res.status(INTERNAL_SERVER_ERROR_CODE).json({ error: "Account created but login failed" });
+      return;
+    }
+
+    setAuthCookies(res, user.Id);
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(INTERNAL_SERVER_ERROR_CODE).json({ error: "Database error" });
   }
 };
 
 /**
- * Update a password
- * @param req The request object. It should contain a new password in the request body
- * @param res The response object
+ * Update a password. Requires current_password and new_password.
  */
 export const update_password = async (req: Request, res: Response) => {
-  const { password } = req.body;
-  if (typeof password === "string") {
-    if (req.user !== undefined) {
-      const hashed_password = await hashPassword(password);
-      updateUserPassword(req.user.Id, hashed_password)
-        .then((updated) => {
-          if (updated) {
-            res.send("Password updated");
-          } else {
-            // This should never be reached, due to the previous authentication checking
-            res.status(INTERNAL_SERVER_ERROR_CODE).send("User does not exist");
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-        });
-    } else {
+  const { current_password, new_password } = req.body;
+
+  if (req.user === undefined) {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+    return;
+  }
+
+  try {
+    const user = await getUserWithUsername(req.user.Username);
+    if (!user || !user.Password) {
       res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+      return;
     }
-  } else {
-    res.status(BAD_REQUEST_CODE).send("Missing new password");
+
+    const currentValid = await compare_hashed_password(current_password, user.Password);
+    if (!currentValid) {
+      res.status(UNAUTHORIZED_REQUEST_CODE).json({ error: "Current password is incorrect" });
+      return;
+    }
+
+    const hashed = await hashPassword(new_password);
+    const updated = await updateUserPassword(req.user.Id, hashed);
+
+    if (updated) {
+      // Issue new tokens after password change (invalidates old sessions implicitly when they expire)
+      setAuthCookies(res, req.user.Id);
+      res.send("Password updated");
+    } else {
+      res.status(INTERNAL_SERVER_ERROR_CODE).send("Failed to update password");
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
   }
 };
 
 /**
- * Login query
- * @param req The request object. It should contain a username and password in its request body
- * @param res The response object
+ * Login. Sets httpOnly access + refresh cookies.
  */
 export const login = async (req: Request, res: Response) => {
   const { username, password } = req.body;
-  if (typeof username === "string" && typeof password === "string") {
-    const username_lower = username.toLowerCase();
-    getUserWithUsername(username_lower)
-      .then(async (user_account) => {
-        if (user_account === undefined) {
-          res.status(UNAUTHORIZED_REQUEST_CODE).end();
-        } else {
-          const password_valid = await compare_hashed_password(
-            password,
-            user_account.Password
-          );
-          if (password_valid) {
-            const token = jwt.sign(
-              {
-                Id: user_account.Id,
-              },
-              process.env.API_SECRET as string,
-              { expiresIn: "7d" }
-            );
-            res.status(200).json({ token: token });
-          } else {
-            res.status(UNAUTHORIZED_REQUEST_CODE).end();
-          }
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(INTERNAL_SERVER_ERROR_CODE).end();
-      });
-  } else {
-    res.status(BAD_REQUEST_CODE).end();
+  const username_lower = username.toLowerCase();
+
+  try {
+    const user = await getUserWithUsername(username_lower);
+    if (!user) {
+      res.status(UNAUTHORIZED_REQUEST_CODE).json({ error: "Invalid credentials" });
+      return;
+    }
+
+    const valid = await compare_hashed_password(password, user.Password);
+    if (!valid) {
+      res.status(UNAUTHORIZED_REQUEST_CODE).json({ error: "Invalid credentials" });
+      return;
+    }
+
+    setAuthCookies(res, user.Id);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(INTERNAL_SERVER_ERROR_CODE).json({ error: "Server error" });
   }
 };
 
 /**
- * Check if an account is marked as an administrator
- * @param req The request object
- * @param res The response object
+ * Logout. Clears both auth cookies.
+ */
+export const logout = async (_req: Request, res: Response) => {
+  clearAuthCookies(res);
+  res.status(200).json({ message: "Logged out" });
+};
+
+/**
+ * Refresh the access token using the refresh token cookie.
+ * Issues a new access token (and rotates the refresh token for security).
+ */
+export const refresh_token = async (req: Request, res: Response) => {
+  const refreshCookie = req.cookies["refresh-token"] as string | undefined;
+
+  if (!refreshCookie) {
+    res.status(401).json({ error: "No refresh token" });
+    return;
+  }
+
+  try {
+    const userId = await verifyRefreshToken(refreshCookie);
+    if (userId === null) {
+      clearAuthCookies(res);
+      res.status(401).json({ error: "Invalid refresh token" });
+      return;
+    }
+
+    // Verify the user still exists
+    const user = await getUserWithId(userId);
+    if (!user) {
+      clearAuthCookies(res);
+      res.status(401).json({ error: "User not found" });
+      return;
+    }
+
+    // Issue new access + refresh tokens (rotation)
+    setAuthCookies(res, userId);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error(err);
+    clearAuthCookies(res);
+    res.status(401).json({ error: "Refresh failed" });
+  }
+};
+
+/**
+ * Check if the authenticated user is an admin.
  */
 export const is_account_admin = async (req: Request, res: Response) => {
   if (req.user === undefined) {
     res.status(UNAUTHORIZED_REQUEST_CODE).send("User not found");
-  } else {
-    isUserAdmin(req.user.Id)
-      .then((result) => {
-        res.json(result);
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-      });
+    return;
+  }
+  try {
+    const result = await isUserAdmin(req.user.Id);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
   }
 };
 
 /**
- * Add an email to an account
- * @param req The request object. It should contain a userId in the request body
- * @param res The response object
+ * Add an email to an account.
  */
 export const add_email = async (req: Request, res: Response) => {
-  const email = req.body["Email"];
-  if (typeof email === "string") {
-    if (req.user !== undefined) {
-      const email_lower = email.trim().toLowerCase();
-      if (is_email_valid(email_lower)) {
-        addEmailForUser(req.user.Id, email)
-          .then((email_added) => {
-            if (email_added) {
-              res.send(`Email: ${email} added to user`);
-            } else {
-              res
-                .status(BAD_REQUEST_CODE)
-                .send("User already has an email or email is already in use");
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-            res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-          });
-      } else {
-        res.status(BAD_REQUEST_CODE).send("Email invalid");
-      }
-    } else {
-      res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+  const { Email } = req.body;
+
+  if (req.user === undefined) {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+    return;
+  }
+
+  try {
+    const email_lower = Email.trim().toLowerCase();
+    if (!is_email_valid(email_lower)) {
+      res.status(BAD_REQUEST_CODE).send("Email invalid");
+      return;
     }
-  } else {
-    res.status(BAD_REQUEST_CODE).send("Missing email");
+    const added = await addEmailForUser(req.user.Id, email_lower);
+    if (added) {
+      res.send(`Email: ${email_lower} added to user`);
+    } else {
+      res.status(BAD_REQUEST_CODE).send("User already has an email or email is already in use");
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
   }
 };
 
 /**
- * Get an email registered for an account
- * @param req The request object
- * @param res The response object
+ * Get the email registered for an account.
  */
 export const get_email = async (req: Request, res: Response) => {
   if (req.user === undefined) {
     res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
-  } else {
-    getEmailForUserWithId(req.user.Id)
-      .then((email) => {
-        if (email === "") {
-          res.json({ Email: null });
-        } else {
-          res.json({ Email: email });
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-      });
+    return;
+  }
+  try {
+    const email = await getEmailForUserWithId(req.user.Id);
+    res.json({ Email: email });
+  } catch (err) {
+    console.error(err);
+    res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
   }
 };
 
 /**
- * Update an email on an account
- * @param req The request object
- * @param res The response object
+ * Update an email for an account.
  */
 export const update_email = async (req: Request, res: Response) => {
-  const email = req.body["Email"];
-  if (typeof email === "string") {
-    if (req.user !== undefined) {
-      const email_lower = email.trim().toLowerCase();
-      if (is_email_valid(email_lower)) {
-        updateUserEmail(req.user.Id, email_lower)
-          .then((email_updated) => {
-            if (email_updated) {
-              res.send(`Email: ${email} set for user`);
-            } else {
-              res
-                .status(BAD_REQUEST_CODE)
-                .send("Email already exists or user does not exist");
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-            res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-          });
-      } else {
-        res.status(BAD_REQUEST_CODE).send("Email invalid");
-      }
-    } else {
-      res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+  const { Email } = req.body;
+
+  if (req.user === undefined) {
+    res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+    return;
+  }
+
+  try {
+    const email_lower = Email.trim().toLowerCase();
+    if (!is_email_valid(email_lower)) {
+      res.status(BAD_REQUEST_CODE).send("Email invalid");
+      return;
     }
-  } else {
-    res.status(BAD_REQUEST_CODE).send("Missing email");
+    const updated = await updateUserEmail(req.user.Id, email_lower);
+    if (updated) {
+      res.send("Email updated");
+    } else {
+      res.status(BAD_REQUEST_CODE).send("Could not update email");
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
   }
 };
 
 /**
- * Get the user details
- * @param req The request object
- * @param res The response object
+ * Get the user's details.
  */
-export const get_user_details = (req: Request, res: Response) => {
-  if (req.user !== undefined) {
-    getUserDetails(req.user.Id)
-      .then((userDetails) => {
-        if (userDetails === null) {
-          res.status(BAD_REQUEST_CODE).json(null);
-        } else {
-          res.json(userDetails);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
-      });
-  } else {
+export const get_user_details = async (req: Request, res: Response) => {
+  if (req.user === undefined) {
     res.status(UNAUTHORIZED_REQUEST_CODE).send("Unauthorized");
+    return;
+  }
+  try {
+    const details = await getUserDetails(req.user.Id);
+    res.json(details);
+  } catch (err) {
+    console.error(err);
+    res.status(INTERNAL_SERVER_ERROR_CODE).send("Database error");
   }
 };

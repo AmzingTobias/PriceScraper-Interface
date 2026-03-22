@@ -29,7 +29,7 @@ import { addImage, linkProductToImage } from "../models/image.models";
  */
 export const get_product = async (req: Request, res: Response) => {
   const { productId } = req.params;
-  getProductWithId(productId)
+  getProductWithId(String(productId))
     .then((product) => {
       if (product === null) {
         res.status(BAD_REQUEST_CODE).json(null);
@@ -115,7 +115,7 @@ export const add_product_full = async (req: Request, res: Response) => {
     if (product_name !== undefined && product_description !== undefined) {
       const product_created = await createProduct(
         product_name,
-        product_description
+        product_description,
       );
       let sites_created = true;
       let image_linked = true;
@@ -141,7 +141,7 @@ export const add_product_full = async (req: Request, res: Response) => {
           if (image_created[0]) {
             image_linked = await linkProductToImage(
               image_created[1],
-              product_created[1]
+              product_created[1],
             );
           }
         }
@@ -150,7 +150,7 @@ export const add_product_full = async (req: Request, res: Response) => {
           res.status(200).send("Product created");
         } else {
           res.send(
-            `Created with errors: Product created: ${product_created[0]}, Sites created: ${sites_created}, Image created: ${image_linked}`
+            `Created with errors: Product created: ${product_created[0]}, Sites created: ${sites_created}, Image created: ${image_linked}`,
           );
         }
       }
@@ -210,7 +210,7 @@ export const rename_product = async (req: Request, res: Response) => {
  */
 export const change_product_description = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   if (req.user !== undefined && (await isUserAdmin(req.user.Id))) {
     const { id } = req.params;
@@ -218,7 +218,7 @@ export const change_product_description = async (
     if (id === undefined || typeof description !== `string`) {
       res.status(BAD_REQUEST_CODE).send("Missing parameters");
     } else {
-      changeProductDescriptionWithId(id, description)
+      changeProductDescriptionWithId(String(id), description)
         .then((changed) => {
           if (changed) {
             res.send("Description updated");

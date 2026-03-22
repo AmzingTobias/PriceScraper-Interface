@@ -29,7 +29,7 @@ import {
  */
 export const get_notification_setting_for_user = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   if (req.user !== undefined) {
     getUserNotificationSettingsWithId(req.user.Id)
@@ -38,7 +38,7 @@ export const get_notification_setting_for_user = async (
           res.status(BAD_REQUEST_CODE).json({});
         } else {
           notification_settings.Enabled = Boolean(
-            notification_settings.Enabled
+            notification_settings.Enabled,
           );
           res.json(notification_settings);
         }
@@ -60,12 +60,10 @@ export const get_notification_setting_for_user = async (
  */
 export const update_notifications_settings = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const enable_notifications = req.body["Enable"];
-  if (
-    typeof enable_notifications === "boolean"
-  ) {
+  if (typeof enable_notifications === "boolean") {
     // Only the user the request is for can update their notification settings
     if (req.user !== undefined) {
       updateNotificationSettingsWithUserId(req.user.Id, {
@@ -97,7 +95,7 @@ export const update_notifications_settings = async (
  */
 export const get_products_user_notified_for = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   if (req.user !== undefined) {
     getNotifiedProductsWithUserId(req.user.Id)
@@ -122,7 +120,7 @@ export const get_products_user_notified_for = async (
  */
 export const link_user_to_product_for_notification = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const product_id = req.body["ProductId"];
   if (typeof product_id === "number") {
@@ -135,7 +133,7 @@ export const link_user_to_product_for_notification = async (
             res
               .status(BAD_REQUEST_CODE)
               .send(
-                "Product does not exist, or user is aready receiving notifications for product"
+                "Product does not exist, or user is aready receiving notifications for product",
               );
           }
         })
@@ -158,7 +156,7 @@ export const link_user_to_product_for_notification = async (
  */
 export const remove_user_notification_for_product = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const product_id = req.body["ProductId"];
   if (typeof product_id === "number") {
@@ -168,7 +166,7 @@ export const remove_user_notification_for_product = async (
         .then((unlinked_notification) => {
           if (unlinked_notification) {
             res.send(
-              `User no longer receiving notifications for product: ${product_id}`
+              `User no longer receiving notifications for product: ${product_id}`,
             );
           } else {
             res
@@ -309,12 +307,12 @@ export const update_discord_webhook = async (req: Request, res: Response) => {
  */
 export const is_user_notified_for_product = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   if (req.user !== undefined) {
     const { productId } = req.params;
     if (productId !== undefined) {
-      isUserBeingNotifiedForProduct(req.user.Id, productId)
+      isUserBeingNotifiedForProduct(req.user.Id, String(productId))
         .then((notified) => {
           res.json(notified);
         })

@@ -14,7 +14,7 @@ function validatePassword(pw: string): boolean {
 }
 
 export default function LoginPage() {
-  const { setToken } = useAuth();
+  const { onLoginSuccess } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<FormMode>("login");
   const [username, setUsername] = useState("");
@@ -40,14 +40,13 @@ export default function LoginPage() {
 
     setSubmitting(true);
     const fn = mode === "login" ? apiLogin : apiSignup;
-    const token = await fn(username, password);
+    const success = await fn(username, password);
 
-    if (token) {
-      setToken(token);
+    if (success) {
+      onLoginSuccess();
       router.push("/");
     } else {
       setWarning(mode === "login" ? "Invalid credentials." : "Signup failed — username may be taken.");
-      // Cooldown after failed attempt to slow brute force
       setTimeout(() => setSubmitting(false), 2000);
       return;
     }

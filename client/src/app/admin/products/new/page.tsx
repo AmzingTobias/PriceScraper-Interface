@@ -60,6 +60,7 @@ export default function NewProductPage() {
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           name: productName,
           description: productDesc,
@@ -77,12 +78,13 @@ export default function NewProductPage() {
       if (imageData && productData.Id) {
         const formData = new FormData();
         formData.append("image", imageData);
-        const imgRes = await fetch("/api/images/", { method: "POST", body: formData });
+        const imgRes = await fetch("/api/images/", { method: "POST", body: formData, credentials: "include" });
         if (imgRes.ok) {
           const imgData = await imgRes.json();
           await fetch(`/api/images/product/${productData.Id}`, {
             method: "PATCH",
             headers: { "Content-type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ ImageId: imgData.Id }),
           });
         }
@@ -92,6 +94,7 @@ export default function NewProductPage() {
         await fetch("/api/sites", {
           method: "POST",
           headers: { "Content-type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ "Site Link": link, ProductId: productData.Id }),
         });
       }

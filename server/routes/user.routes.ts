@@ -6,33 +6,47 @@ import {
   get_user_details,
   is_account_admin,
   login,
+  logout,
+  refresh_token,
   update_email,
   update_password,
 } from "../controller/user.controller";
 import { verify_token } from "../common/security";
+import { validate } from "../middleware/validate";
+import { authRateLimiter } from "../middleware/rate-limit";
+import {
+  loginSchema,
+  signupSchema,
+  changePasswordSchema,
+  emailSchema,
+} from "../common/validation";
 
 export const userRouter: Router = Router();
 
-// Create a new account
-userRouter.post("/signup", create_account);
+// Auth endpoints with rate limiting and validation
+userRouter.post("/signup", authRateLimiter, validate(signupSchema), create_account);
+userRouter.post("/login", authRateLimiter, validate(loginSchema), login);
+userRouter.post("/logout", logout);
 
-// Change a password for an account
-userRouter.patch("/change-password", verify_token, update_password);
+// Token refresh — no auth middleware (access token may be expired)
+userRouter.post("/refresh", refresh_token);
 
-// Login to an account
-userRouter.post("/login", login);
+// Password change with validation
+userRouter.patch(
+  "/change-password",
+  authRateLimiter,
+  verify_token,
+  validate(changePasswordSchema),
+  update_password
+);
 
-// Check if an account is an administrator
+// Admin check
 userRouter.get("/admin", verify_token, is_account_admin);
 
-// Get an email for an account
+// Email management
 userRouter.get("/email", verify_token, get_email);
+userRouter.patch("/email", verify_token, validate(emailSchema), update_email);
+userRouter.post("/email", verify_token, validate(emailSchema), add_email);
 
-// Update an email for an account
-userRouter.patch("/email", verify_token, update_email);
-
-// Add an email to an account
-userRouter.post("/email", verify_token, add_email);
-
-// Get the user details for a user
+// User details
 userRouter.get("/", verify_token, get_user_details);

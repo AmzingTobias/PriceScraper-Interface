@@ -81,7 +81,7 @@ export const createNotificationSettingsForUser = (
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     db.run(
-      "INSERT INTO Notifications (User_Id, Enabled) VALUES (?, ?, ?)",
+      "INSERT INTO Notifications (User_Id, Enabled) VALUES (?, ?)",
       [user_id, 0],
       function (err) {
         if (err) {

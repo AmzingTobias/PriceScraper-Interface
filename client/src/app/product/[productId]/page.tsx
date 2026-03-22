@@ -32,7 +32,7 @@ const TIME_PERIODS: { key: TimePeriod; label: string }[] = [
 export default function ProductPage() {
   const { productId } = useParams<{ productId: string }>();
   const router = useRouter();
-  const { isLoggedIn, isAdmin, token, mounted } = useAuth();
+  const { isLoggedIn, isAdmin, mounted } = useAuth();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState<string | null>(null);
@@ -68,7 +68,7 @@ export default function ProductPage() {
     if (productId && isLoggedIn) {
       isNotifiedForProduct(productId).then(setNotified);
     }
-  }, [productId, isLoggedIn, token]);
+  }, [productId, isLoggedIn]);
 
   if (loading || period === null) {
     return <ProductDetailSkeleton />;
