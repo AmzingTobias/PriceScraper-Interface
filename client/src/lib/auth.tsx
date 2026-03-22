@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { isUserAdmin as checkIsAdmin } from "./api";
 
-const TOKEN_KEY = "ps-auth-token";
+const AUTH_COOKIE = "auth-token";
+const JWT_PREFIX = "JWT ";
 const FILTER_SESSION_KEY = "ps-show-notified-only";
 
 interface AuthContextType {
@@ -28,16 +29,13 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-/**
- * Decode the JWT payload without any external library.
- * Returns null if the token is malformed.
- */
-function decodePayload(token: string): { exp?: number; Id?: number } | null {
+/** Decode JWT payload using built-in atob (no external deps) */
+function decodePayload(token: string): { exp?: number } | null {
   try {
-    const parts = token.split(".");
+    const raw = token.startsWith(JWT_PREFIX) ? token.slice(JWT_PREFIX.length) : token;
+    const parts = raw.split(".");
     if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1]));
-    return payload;
+    return JSON.parse(atob(parts[1]));
   } catch {
     return null;
   }
@@ -48,34 +46,39 @@ function isTokenValid(token: string): boolean {
   if (!token) return false;
   const payload = decodePayload(token);
   if (!payload || !payload.exp) return false;
-  // Add 10 second buffer to avoid edge-case race conditions
-  return payload.exp > Date.now() / 1000 + 10;
+  return payload.exp > Date.now() / 1000;
 }
 
-/** Read token from localStorage, clear it if expired */
-function readStoredToken(): string {
+/** Read the raw JWT (without JWT prefix) from the auth cookie */
+function readCookieToken(): string {
   try {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return "";
-    if (isTokenValid(token)) return token;
-    // Token expired — clean up
-    localStorage.removeItem(TOKEN_KEY);
+    const cookies = document.cookie.split(";");
+    for (const c of cookies) {
+      const [name, ...rest] = c.split("=");
+      if (name.trim() === AUTH_COOKIE) {
+        const value = rest.join("=").trim();
+        // Strip "JWT " prefix if present, return raw token
+        return value.startsWith(JWT_PREFIX) ? value.slice(JWT_PREFIX.length) : value;
+      }
+    }
     return "";
   } catch {
     return "";
   }
 }
 
-/** Store token in localStorage */
-function storeToken(token: string): void {
+/** Set the auth cookie with the JWT token */
+function setCookieToken(token: string): void {
   try {
     if (token) {
-      localStorage.setItem(TOKEN_KEY, token);
+      const value = `${JWT_PREFIX}${token}`;
+      const secure = location.protocol === "https:" ? "; Secure" : "";
+      document.cookie = `${AUTH_COOKIE}=${value}; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax${secure}`;
     } else {
-      localStorage.removeItem(TOKEN_KEY);
+      document.cookie = `${AUTH_COOKIE}=; Path=/; Max-Age=0`;
     }
   } catch {
-    // localStorage may not be available
+    // document.cookie may not be available
   }
 }
 
@@ -85,10 +88,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [showNotifiedOnly, setShowNotifiedOnlyState] = useState(false);
 
-  // On mount: read token from localStorage and restore filter state
+  // On mount: read token from cookie
   useEffect(() => {
-    const stored = readStoredToken();
-    if (stored) setTokenState(stored);
+    const stored = readCookieToken();
+    if (stored && isTokenValid(stored)) {
+      setTokenState(stored);
+    } else if (stored) {
+      // Expired — clear it
+      setCookieToken("");
+    }
 
     try {
       const saved = sessionStorage.getItem(FILTER_SESSION_KEY);
@@ -98,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Check admin status whenever token changes
+  // Check admin status when token changes
   useEffect(() => {
     if (token) {
       checkIsAdmin()
@@ -116,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const interval = setInterval(() => {
       if (!isTokenValid(token)) {
         setTokenState("");
-        storeToken("");
+        setCookieToken("");
         setIsAdmin(false);
       }
     }, 60 * 1000);
@@ -136,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       newToken = "";
     }
     setTokenState(newToken);
-    storeToken(newToken);
+    setCookieToken(newToken);
   }, []);
 
   const logout = useCallback(() => {

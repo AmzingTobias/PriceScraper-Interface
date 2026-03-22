@@ -12,7 +12,7 @@ import { TextArea } from "@/components/ui/input";
 import { Trash2, Plus, Image as ImageIcon } from "lucide-react";
 
 export default function NewProductPage() {
-  const { isAdmin, mounted, token } = useAuth();
+  const { isAdmin, mounted } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -57,14 +57,9 @@ export default function NewProductPage() {
     }
 
     try {
-      const authHeaders = {
-        "Content-type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      };
-
       const res = await fetch("/api/products", {
         method: "POST",
-        headers: authHeaders,
+        headers: { "Content-type": "application/json" },
         body: JSON.stringify({
           name: productName,
           description: productDesc,
@@ -84,14 +79,13 @@ export default function NewProductPage() {
         formData.append("image", imageData);
         const imgRes = await fetch("/api/images/", {
           method: "POST",
-          headers: { "Authorization": `Bearer ${token}` },
           body: formData,
         });
         if (imgRes.ok) {
           const imgData = await imgRes.json();
           await fetch(`/api/images/product/${productData.Id}`, {
             method: "PATCH",
-            headers: authHeaders,
+            headers: { "Content-type": "application/json" },
             body: JSON.stringify({ ImageId: imgData.Id }),
           });
         }
@@ -100,7 +94,7 @@ export default function NewProductPage() {
       for (const link of siteLinks) {
         await fetch("/api/sites", {
           method: "POST",
-          headers: authHeaders,
+          headers: { "Content-type": "application/json" },
           body: JSON.stringify({ "Site Link": link, ProductId: productData.Id }),
         });
       }

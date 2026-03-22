@@ -17,30 +17,13 @@ import {
   TTL,
 } from "./cache";
 
-// ── Auth-aware fetch wrapper ──
+// ── Auth-aware fetch ──
+// The auth cookie is sent automatically by the browser on same-origin requests
+// and through Vercel's rewrite proxy. No explicit header needed.
+// This alias exists for readability — to distinguish auth vs public endpoints.
 
-/**
- * Get the current auth token from localStorage.
- * Returns empty string if no token or expired.
- */
-function getToken(): string {
-  try {
-    return localStorage.getItem("ps-auth-token") || "";
-  } catch {
-    return "";
-  }
-}
-
-/**
- * Fetch wrapper that attaches the Bearer token to authenticated requests.
- */
-async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  const token = getToken();
-  const headers = new Headers(init?.headers);
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-  return fetch(input, { ...init, headers });
+function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  return fetch(input, init);
 }
 
 // ── Products ──
