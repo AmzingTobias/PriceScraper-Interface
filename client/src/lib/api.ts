@@ -33,7 +33,7 @@ async function refreshAccessToken(): Promise<boolean> {
   isRefreshing = true;
   refreshPromise = (async () => {
     try {
-      const res = await fetch("/api/users/refresh", {
+      const res = await fetch("/api/auth/refresh", {
         method: "POST",
         credentials: "include",
       });
@@ -50,26 +50,19 @@ async function refreshAccessToken(): Promise<boolean> {
 }
 
 /**
- * Fetch wrapper that automatically retries on 401 TOKEN_EXPIRED by refreshing
+ * Fetch wrapper that automatically retries on 401 by refreshing
  * the access token first. All authenticated API calls should use this.
  */
 async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const opts: RequestInit = { ...init, credentials: "include" };
   let res = await fetch(input, opts);
 
-  // If access token expired, try refreshing
+  // If we got a 401, try refreshing the access token via the refresh cookie
   if (res.status === 401) {
-    try {
-      const body = await res.clone().json();
-      if (body?.code === "TOKEN_EXPIRED") {
-        const refreshed = await refreshAccessToken();
-        if (refreshed) {
-          // Retry the original request with the new access token
-          res = await fetch(input, opts);
-        }
-      }
-    } catch {
-      // Body wasn't JSON or other error — just return the original 401
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      // Retry the original request with the new access token cookie
+      res = await fetch(input, opts);
     }
   }
 
@@ -229,7 +222,7 @@ export async function linkImageToProduct(productId: string | number, imageId: nu
 // ── Users / Auth ──
 
 export async function login(username: string, password: string): Promise<boolean> {
-  const res = await fetch("/api/users/login", {
+  const res = await fetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -239,7 +232,7 @@ export async function login(username: string, password: string): Promise<boolean
 }
 
 export async function signup(username: string, password: string): Promise<boolean> {
-  const res = await fetch("/api/users/signup", {
+  const res = await fetch("/api/auth/signup", {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -249,7 +242,7 @@ export async function signup(username: string, password: string): Promise<boolea
 }
 
 export async function logout(): Promise<void> {
-  await fetch("/api/users/logout", {
+  await fetch("/api/auth/logout", {
     method: "POST",
     credentials: "include",
   });
